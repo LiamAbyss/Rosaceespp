@@ -1,146 +1,125 @@
 %{
-  #include <iostream>
-  #include <cstdlib>
-  #include <cmath>    
-  #include <string.h>
-  #include <string>
-  #include <algorithm>
-  #include <map>
-  #include <vector>
+  #include "rosacees.h"
   extern int yylex ();
   using namespace std;
   int yyerror(char *s);
+  extern FILE *yyin;
+  
   map<string, string> var;
 
-  void removeFromStr(string &s, char c)
-  {
-    s.erase(std::remove(s.begin(), s.end(), c), s.end());
-  }
-
-  string toStr(string &s)
-  {
-    removeFromStr(s, '"');
-    s = "\"" + s + "\"";
-    return s;
-  }
-
-  bool isNumber(string line)
-  {
-      char* p;
-      strtod(line.c_str(), &p);
-      return *p == 0;
-  }
-
-  bool isString(string s)
-  {
-    return (s[0] == '"' && s[s.size()-1] == '"');
-  }
 %}
-
-
-%code requires
-{
-#include <string.h>
-#include <string>
-using namespace std;
-}
 
 %union
 {
-  double nombre;
   char* chaine;
 }
 
 %start program
 
-%token <nombre> NUM	
-%token <nombre> SIN
+%token <chaine> NUM	
+%token <chaine> SIN
 %token <chaine> STR
 %token <chaine> VAR
-%type <nombre> calc
+%token EndOF
+%token EndOL
 %type <chaine> expr
-%type <chaine> var
+%type <chaine> calc
+%type <chaine> str
 %left '+' '-'
 %left '*' '/'
 
 %%
 program: /* empty */		
-       | program line          
+       | program line     
 	   ;
 
-line: '\n'			 
-	| calc '\n' { cout << endl << "Result : " << $1 << endl; }	
-  | expr '\n' { cout << endl << "Result : " << $1 << endl; }
-  | var '\n' {cout << endl << "Result : " << $1 << endl; }
+line: EndOL	
+  | EndOF { return 0; }
+  | expr EndOF {cout << endl << "Resultat : " << $1 << endl; return 0;}
+  | expr EndOL {cout << endl << "Resultat : " << $1 << endl;}
 	;
 
-var:
+calc:
+    NUM
+      {
+        strcpy($$, to_string(stof($1)).c_str());
+      }
+    | '-' NUM
+      {
+        strcpy($$, to_string(-stof($2)).c_str());
+      }
+
+str:
+    STR
+
+expr:
     VAR
     {
-      strcpy($$, var[$1].c_str());
+      if(doesExist(var, $1))
+        strcpy($$, var[$1].c_str());
+      else
+      {
+        error(var, {{undefined, $1}});
+        strcpy($$, undefined);
+      }
     }
     | calc
-    | STR
-    | var '=' calc
+    | str
+    | VAR '=' expr
       {
-        var[$1] = to_string($3);
-        strcpy($$, to_string($3).c_str());
-      }
-    | var '=' expr
-      {
-        var[$1] = $3;
-        $$ = $3;
-      }
-    | '(' var ')'
-      {
-        $$ = $2; 
-      }
-    | var '+' var
-      {
-        string s = ((!var[$1].empty())?var[$1]:$1);
-        cout << $1 << " " << $3 << endl;
-        double d = 0;
-        if(isString((string)((!var[$1].empty())?var[$1]:$1)))
+        if(doesExist(var, $3))
         {
-          s += (!var[$3].empty())?var[$3]:$3;  
-          strcpy($$, toStr(s).c_str());
+          var[$1] = $3;
+          strcpy($$, var[$1].c_str());
         }
-        else if(isString((string)var[$3]))
+        else if(doesExist(var, $1))
         {
-          d = stof((!var[$1].empty())?var[$1]:$1);
-          s = (!var[$3].empty())?var[$3]:$3;
-          removeFromStr(s, '"');
-          if(isNumber(s))
-          {
-              d += stof(s);
-              strcpy($$, to_string(d).c_str());
-          }
-          else
-          {
-              s = (!var[$1].empty())?var[$1]:$1;
-              s += (!var[$3].empty())?var[$3]:$3;
-              strcpy($$, toStr(s).c_str());
-          }
+          strcpy($$, var[$1].c_str());
         }
         else
         {
-          d = stof((!var[$1].empty())?var[$1]:$1) + stof((!var[$3].empty())?var[$3]:$3);
-          strcpy($$, to_string(d).c_str());
+          strcpy($$, undefined);
         }
       }
-    ;
-
-calc:
-    NUM                 { $$ = $1;  /* printf("%g ", $1); */ }		
-    | calc '+' calc     { $$ = $1 + $3;  cout << $1 << " + " << $3 << " = " << $$  << endl; }
-    | calc '-' calc     { $$ = $1 - $3;  cout << $1 << " - " << $3 << " = " << $$  << endl; }   		
-    | calc '*' calc     { $$ = $1 * $3;  cout << $1 << " * " << $3 << " = " << $$  << endl; }		
-    | '(' calc ')'      { $$ = $2;  }
-    | SIN '(' calc ')'  { $$ = sin($3);  cout << "sin(" << $3 << ") = " << $$ << endl; }
-    ;
-
-expr:
-    STR                 { $$ = $1 ; }
+    | '(' expr ')'
+      {
+        $$ = $2; 
+      }
+    | expr '+' expr
+      {
+        if((string)$1 != undefined && (string)$3 != undefined)
+        {
+          string s = $1;
+          cout << $1 << " " << $3 << endl;
+          double d = 0;
+          if(isString(var, s))
+          {
+            s = toStdStr(var, s) + toStdStr(var, $3);
+            strcpy($$, toStr(var, s).c_str());
+          }
+          else if(isString(var, $3))
+          {
+            d = stof($1);
+            s = toStdStr(var, $3);
+            if(isNumber(var, s))
+            {
+                d += stof(s);
+                strcpy($$, to_string(d).c_str());
+            }
+            else
+            {
+                s = $1;
+                s += toStdStr(var, $3);
+                strcpy($$, toStr(var, s).c_str());
+            }
+          }
+          else
+          {
+            d = stof($1) + stof($3);
+            strcpy($$, to_string(d).c_str());
+          }
+        }
+      }
     ;
 
 %%
@@ -149,7 +128,7 @@ int yyerror(char *s) {
     printf("%s\n", s);
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
     cout << " ________________________________________" << endl;
     cout << "|          _,--._.-,                     |"<< endl;
     cout << "|         /\\_r-,\\_ )                     |" << endl;
@@ -167,6 +146,14 @@ int main(void) {
     cout << "|                       \\|               |" << endl;
     cout << " `````````````````````````````````````````" << endl;
 
-    yyparse();						
+    if(argc > 1) 
+    {
+      yyin = fopen(argv[1], "r");
+      yyparse();  
+    }				
+    else
+    {
+      yyparse();
+    }
     return 0;
 }

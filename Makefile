@@ -1,5 +1,11 @@
-all:
-	flex -o rosacees.lex.cpp rosacees.l
+build:
 	bison -d rosacees.y -o rosacees.bison.cpp
-	g++ rosacees.lex.cpp rosacees.bison.cpp -o rosacees
+	flex -o rosacees.lex.cpp rosacees.l
+	g++ -g -c rosacees.cpp -o rosacees.o 
+	g++ rosacees.bison.cpp rosacees.lex.cpp rosacees.o -o rosacees
+
+run:
 	./rosacees
+
+ex:
+	./rosacees exemple.rpp
