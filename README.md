@@ -1,2 +1,2 @@
 # Rosaceespp
-School project : Custom programmation language
+School project : Custom programming language
