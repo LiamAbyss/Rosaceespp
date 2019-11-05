@@ -10,27 +10,35 @@ using namespace std;
 
 #define undefined "undefined"
 #define none "none"
+#define True "vrai"
+#define False "faux"
 
 void showVars(std::map<std::string, std::string> &var);
 
-void error(std::map<std::string, std::string> &var, multimap<string, string> errors);
+void error(multimap<string, string> errors);
 
 void erase(std::map<std::string, std::string> &var, string s);
 
-bool isString(std::map<std::string, std::string> &var, string s);
+bool isString(string s);
 
-void removeFromStr(std::map<std::string, std::string> &var, string &s, char c);
+void removeFromStr(string &s, char c);
 
-string toStdStr(std::map<std::string, std::string> &var, string s);
+string toStdStr(string s);
 
-string toStr(std::map<std::string, std::string> &var, string s);
+string toStr(string s);
 
-string toNbr(std::map<std::string, std::string> &var, string s);
+string toNbr(string s);
 
-bool isNumber(std::map<std::string, std::string> &var, string s);
+bool isNumber(string s);
 
-bool canNumber(std::map<std::string, std::string> &var, string s);
+bool canNumber(string s);
 
 bool doesExist(std::map<std::string, std::string> &var, string s);
 
 bool isDefined(std::map<std::string, std::string> &var, string s);
+
+bool ifcond(vector<bool> &si);
+
+string compare(string &a, string &b, string &c);
+
+bool isBool(string s);
