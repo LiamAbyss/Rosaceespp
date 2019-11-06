@@ -1,7 +1,10 @@
 a = 2
 b = vrai
-si "1" == b:
-    a = a+1
+faux+b
+si a == 3:
+    si a==2:
+        a = a+1
+    end
 end
 
 si a < "3":

@@ -43,11 +43,16 @@ program: /* empty */
 
 line: EndOL
   | EndOF { return 0; }
-  | expr EndOF {cout << endl << "Resultat : " << $1 << endl; return 0;}
-  | expr EndOL {cout << endl << "Resultat : " << $1 << endl; showVars(var);}
+  | expr EndOF { if(ifcond(si)) { cout << endl << "Resultat : " << $1 << endl; } return 0;}
+  | expr EndOL { if(ifcond(si)) { cout << endl << "Resultat : " << $1 << endl; showVars(var);} }
   | IF expr ':'
     {
-      if(isString($2))
+      if(ifcond(si)) cout << "if " << $2 << endl;
+      if(!ifcond(si))
+      {
+        si.push_back(false);
+      }
+      else if(isString($2))
       {
         if(!toStr($2).empty())
           si.push_back(true);
@@ -62,19 +67,24 @@ line: EndOL
       {
         si.push_back((!strcmp($2, True)? true : false));
       }
-      cout << "if " << si[si.size() - 1] << endl;
     }
   | END 
     { 
-      si.pop_back(); 
-      cout << "end" << endl; 
+      if(si.size())
+      {
+        si.pop_back(); 
+        if(ifcond(si)) cout << "end" << endl; 
+      }
     }
 	;
 
 comp: expr COMP expr
       {
-        string a = $1, b = $3, c = $2;
-        strcpy($$, compare(a, b, c).c_str());
+        if(ifcond(si))
+        {
+          string a = $1, b = $3, c = $2;
+          strcpy($$, compare(a, b, c).c_str());
+        }
       };
 
 calc:
@@ -146,7 +156,7 @@ expr:
         if(ifcond(si) && doesExist(var, $1) && doesExist(var, $3))
         {
           string s = $1;
-          cout << $1 << " " << $3 << endl;
+          cout << $1 << " + " << $3 << endl;
           double d = 0;
           if(isString(s))
           {
@@ -159,14 +169,14 @@ expr:
             s = toStdStr($3);
             if(isNumber(s))
             {
-                d += stof(s);
-                strcpy($$, to_string(d).c_str());
+              d += stof(s);
+              strcpy($$, to_string(d).c_str());
             }
             else
             {
-                s = $1;
-                s += toStdStr($3);
-                strcpy($$, toStr(s).c_str());
+              s = $1;
+              s += toStdStr($3);
+              strcpy($$, toStr(s).c_str());
             }
           }
           else
@@ -175,20 +185,24 @@ expr:
             {
               if(isBool($3))
               {
-                d = (!strcmp($1, True)? 1 : 0) + (!strcmp($3, True)? 1 : 0);
+                strcpy($$, (((!strcmp($1, True)? 1 : 0) + (!strcmp($3, True)? 1 : 0))? True : False));
               }
               else
               {
                 d = (!strcmp($1, True)? 1 : 0) + stof($3);
+                strcpy($$, to_string(d).c_str());
               }
             }
             else if(isBool($3))
             {
               d = stof($1) + (!strcmp($3, True)? 1 : 0);
+              strcpy($$, to_string(d).c_str());
             }
             else
+            {
               d = stof($1) + stof($3);
-            strcpy($$, to_string(d).c_str());
+              strcpy($$, to_string(d).c_str());
+            }
           }
         }
       }
