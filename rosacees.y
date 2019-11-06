@@ -1,14 +1,10 @@
 %{
   #include "rosacees.h"
-  extern void yyrestart ( FILE *input_file );
-  extern int yylex ();
   using namespace std;
   int yyerror(char *s);
-  extern FILE *yyin;
-  extern int line;
   map<string, string> var;
-  vector<bool> si;
-  int nbLine = 0;
+  vector<pair<bool, string>> condBlock;
+  vector<int> lineBlock;
 
 %}
 
@@ -26,6 +22,7 @@
 %token <chaine > COMP
 %token <chaine> BOOL
 %token IF
+%token WHILE
 %token END
 %token EndOF
 %token EndOL
@@ -43,44 +40,27 @@ program: /* empty */
 
 line: EndOL
   | EndOF { return 0; }
-  | expr EndOF { if(ifcond(si)) { cout << endl << "Resultat : " << $1 << endl; } return 0;}
-  | expr EndOL { if(ifcond(si)) { cout << endl << "Resultat : " << $1 << endl; showVars(var);} }
+  | expr EndOF { if(ifcond(condBlock)) { cout << endl << "Resultat : " << $1 << endl; } return 0;}
+  | expr EndOL { if(ifcond(condBlock)) { cout << endl << "Resultat : " << $1 << endl; showVars(var);} }
   | IF expr ':'
     {
-      if(ifcond(si)) cout << "if " << $2 << endl;
-      if(!ifcond(si))
-      {
-        si.push_back(false);
-      }
-      else if(isString($2))
-      {
-        if(!toStr($2).empty())
-          si.push_back(true);
-        else
-          si.push_back(false);
-      }
-      else if(isNumber($2))
-      {
-        si.push_back(stof($2));
-      }
-      else
-      {
-        si.push_back((!strcmp($2, True)? true : false));
-      }
+      string a = $2;
+      addCondBlock(condBlock, lineBlock, a, "if", line);
+    }
+  | WHILE expr ':'
+    {
+      string a = $2;
+      addCondBlock(condBlock, lineBlock, a, "while", line);
     }
   | END 
     { 
-      if(si.size())
-      {
-        si.pop_back(); 
-        if(ifcond(si)) cout << "end" << endl; 
-      }
+      removeCondBlock(condBlock, lineBlock);
     }
 	;
 
 comp: expr COMP expr
       {
-        if(ifcond(si))
+        if(ifcond(condBlock))
         {
           string a = $1, b = $3, c = $2;
           strcpy($$, compare(a, b, c).c_str());
@@ -103,7 +83,7 @@ str:
 expr:
     VAR
     {
-      if(ifcond(si))
+      if(ifcond(condBlock))
       {
         if(doesExist(var, $1))
           strcpy($$, var[$1].c_str());
@@ -127,7 +107,7 @@ expr:
     | str
     | VAR '=' expr
       {
-        if(ifcond(si))
+        if(ifcond(condBlock))
         {
           if(doesExist(var, $3))
           {
@@ -146,14 +126,14 @@ expr:
       }
     | '(' expr ')'
       {
-        if(ifcond(si))
+        if(ifcond(condBlock))
         {
           $$ = $2; 
         }
       }
     | expr '+' expr
       {
-        if(ifcond(si) && doesExist(var, $1) && doesExist(var, $3))
+        if(ifcond(condBlock) && doesExist(var, $1) && doesExist(var, $3))
         {
           string s = $1;
           cout << $1 << " + " << $3 << endl;
@@ -235,14 +215,6 @@ int main(int argc, char* argv[]) {
     if(argc > 1) 
     {
       yyin = fopen(argv[1], "r");
-      char c = 'c';
-      while((c = fgetc(yyin)) != EOF)
-      {
-        if(c == '\n')
-        {
-          nbLine++;
-        }
-      }
       rewind(yyin);
       yyparse();  
     }				

@@ -1,14 +1,16 @@
 a = 2
-b = vrai
-faux+b
+
 si a == 3:
     si a==2:
         a = a+1
-    end
-end
+    fin
+fin
 
 si a < "3":
     a = 0
-end
+fin
 
+tant que a < 2:
+    a = a+1
+fin
 a

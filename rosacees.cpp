@@ -85,9 +85,9 @@ bool isDefined(std::map<std::string, std::string> &var, string s)
   return (var.find(s) != var.end() && var[s] != undefined);
 }
 
-bool ifcond(vector<bool> &si)
+bool ifcond(vector<pair<bool, string>> &condBlock)
 {
-  return !si.size() || find(si.begin(), si.end(), false) == si.end();
+  return !condBlock.size() || (find(condBlock.begin(), condBlock.end(), make_pair(false, (string)"while")) == condBlock.end() && find(condBlock.begin(), condBlock.end(), make_pair(false, (string)"if")) == condBlock.end());
 }
 
 string compare(string &a, string &b, string &c)
@@ -154,5 +154,58 @@ string compare(string &a, string &b, string &c)
       return ((b == a)? True : False);
     else if(c == "<")
       return ((b < a)? True : False);
+  }
+}
+
+void addCondBlock(vector<pair<bool, string>> &condBlock, vector<int> &lineBlock, string a, string cas, int &line)
+{
+  if(ifcond(condBlock)) cout << cas << " " << a << endl;
+  if(!ifcond(condBlock))
+  {
+    condBlock.push_back(make_pair(false, cas));
+  }
+  else if(isString(a))
+  {
+    if(!toStr(a).empty())
+      condBlock.push_back(make_pair(true, cas));
+    else
+      condBlock.push_back(make_pair(false, cas));
+  }
+  else if(isNumber(a))
+  {
+    condBlock.push_back(make_pair(stof(a), cas));
+  }
+  else
+  {
+    condBlock.push_back(make_pair(((a == True)? true : false), cas));
+  }
+  lineBlock.push_back(line);
+}
+
+void removeCondBlock(vector<pair<bool, std::string>> &condBlock, vector<int> &lineBlock)
+{
+  if(condBlock.size())
+  {
+    if(condBlock[condBlock.size() - 1].second == "while" && ifcond(condBlock))
+    {
+      rewind(yyin);
+      //looking for the char where this while begins
+      int nbLine = 1;
+      char c;
+      while((c = fgetc(yyin)) != EOF)
+      {
+        if(c == '\n') nbLine++;
+        if(nbLine == lineBlock[lineBlock.size() - 1]) break;
+      }
+      yyrestart(yyin);
+      line = lineBlock[lineBlock.size() - 1];
+    }
+    else
+    {
+      condBlock.pop_back(); 
+      lineBlock.pop_back();
+      if(ifcond(condBlock)) cout << "fin" << endl; 
+    }
+    
   }
 }

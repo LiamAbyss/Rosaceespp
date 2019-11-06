@@ -10,8 +10,9 @@
 %%
 
 si { return IF; }
+tant[' ']que { return WHILE; }
 \<|\>|\<\=|\>\=|\=\=|\!\= { yylval.chaine = strdup(yytext); return COMP; }
-end { return END; }
+fin { return END; }
 vrai { yylval.chaine = strdup(yytext); return BOOL;}
 faux { yylval.chaine = strdup(yytext); return BOOL;}
 [0-9]+(\.[0-9]*)?([Ee][0-9]+)? {  yylval.chaine = strdup(yytext); return NUM; }

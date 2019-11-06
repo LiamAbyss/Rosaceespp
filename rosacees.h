@@ -8,6 +8,11 @@
 #include <vector>
 using namespace std;
 
+extern void yyrestart ( FILE *input_file );
+extern int yylex ();
+extern FILE *yyin;
+extern int line;
+
 #define undefined "undefined"
 #define none "none"
 #define True "vrai"
@@ -37,8 +42,12 @@ bool doesExist(std::map<std::string, std::string> &var, string s);
 
 bool isDefined(std::map<std::string, std::string> &var, string s);
 
-bool ifcond(vector<bool> &si);
+bool ifcond(vector<pair<bool, std::string>> &condBlock);
 
 string compare(string &a, string &b, string &c);
 
 bool isBool(string s);
+
+void addCondBlock(vector<pair<bool, std::string>> &condBlock, vector<int> &lineBlock, string a, string cas, int &line);
+
+void removeCondBlock(vector<pair<bool, std::string>> &condBlock, vector<int> &lineBlock);
