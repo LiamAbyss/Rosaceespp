@@ -1,16 +1,20 @@
-a = 2
+it = 0
+a = "bonour" * 2
+affiche "a = " + a
+affiche retour
 
-si a == 3:
-    si a==2:
-        a = a+1
-    fin
-fin
+b = "j"::"n"
+affiche "b = " + b
+affiche retour
 
-si a < "3":
-    a = 0
-fin
+c = " "::"r"
+affiche "c = " + c
+affiche retour
 
-tant que a < 2:
-    a = a+1
-fin
-a
+affiche "a * b = " + a*b
+affiche retour
+
+affiche "a * c = " + a*c
+affiche retour
+affiche "a * b * c = " + a*b*c
+

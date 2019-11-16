@@ -2,24 +2,32 @@
   #include <iostream>
   #include <cstdlib>
   #include <string>
-  #include "rosacees.bison.hpp"
-
   int line = 1;
+  typedef struct adr {
+    int ic_goto; 
+    int ic_false;
+  } adr;
+  
+  #include "rosacees.bison.hpp"
+ 
 %}
 
 %%
-
 si { return IF; }
+sinon { return SINON; }
 tant[' ']que { return WHILE; }
 \<|\>|\<\=|\>\=|\=\=|\!\= { yylval.chaine = strdup(yytext); return COMP; }
+affiche { return OUT;}
 fin { return END; }
+:: { yylval.chaine = strdup(yytext); return RULE; }
 vrai { yylval.chaine = strdup(yytext); return BOOL;}
 faux { yylval.chaine = strdup(yytext); return BOOL;}
-[0-9]+(\.[0-9]*)?([Ee][0-9]+)? {  yylval.chaine = strdup(yytext); return NUM; }
-\"[a-zA-Z0-9]*\"   { yylval.chaine = strdup(yytext); return STR; }
+(-)?[0-9]+(\.[0-9]*)? {  yylval.chaine = strdup(yytext); return NUM; }
+\"[^\"]*\"   { yylval.chaine = strdup(yytext); return STR; }
 [a-zA-Z]+[a-zA-Z0-9]*  { yylval.chaine = strdup(yytext); return VAR; }
 \n                              { std::cout << "line " << ++line << std::endl;return EndOL; }
 \r  {  return EndOL;}
+retour { return '\n';}
 " "    {}
 .      {  return yytext[0]; }
 <<EOF>>                         { static int c = 0; return (c++)? EndOL:EndOF; }
@@ -27,4 +35,3 @@ faux { yylval.chaine = strdup(yytext); return BOOL;}
 %%
 
 int yywrap(){}
-

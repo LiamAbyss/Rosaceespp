@@ -42,12 +42,14 @@ bool doesExist(std::map<std::string, std::string> &var, string s);
 
 bool isDefined(std::map<std::string, std::string> &var, string s);
 
-bool ifcond(vector<pair<bool, std::string>> &condBlock);
-
 string compare(string &a, string &b, string &c);
 
 bool isBool(string s);
 
-void addCondBlock(vector<pair<bool, std::string>> &condBlock, vector<int> &lineBlock, string a, string cas, int &line);
+bool isRule(string s);
 
-void removeCondBlock(vector<pair<bool, std::string>> &condBlock, vector<int> &lineBlock);
+string calc(string a, string b, string c);
+
+string add(string a, string b);
+
+string product(string a, string b);

@@ -2,15 +2,22 @@
   #include "rosacees.h"
   using namespace std;
   int yyerror(char *s);
-  map<string, string> var;
-  vector<pair<bool, string>> condBlock;
-  vector<int> lineBlock;
 
+  map<string, string> var;
+  vector<pair<int, string>> instructions;
+  int ic = 0;   // compteur instruction 
+  void insert(int c, string d) { instructions.push_back(make_pair(c, d)); ic++;};
+  // structure pour stocker les adresses pour les sauts conditionnels et autres...
+  typedef struct adr {
+    int ic_goto; 
+    int ic_false;
+  } adr; 
 %}
 
 %union
 {
   char* chaine;
+  adr adresse;
 }
 
 %start program
@@ -21,15 +28,21 @@
 %token <chaine> VAR
 %token <chaine > COMP
 %token <chaine> BOOL
-%token IF
-%token WHILE
+%token <chaine> RULE
+%token <adresse> IF
+%token <adresse> WHILE
+%token CALC
+%token SINON
 %token END
+%token OUT
+%token JMP
+%token JNZ
 %token EndOF
 %token EndOL
 %type <chaine> expr
-%type <chaine> calc
-%type <chaine> str
 %type <chaine> comp
+%type <chaine> val
+%type <chaine> rule
 %left '+' '-'
 %left '*' '/'
 
@@ -40,151 +53,104 @@ program: /* empty */
 
 line: EndOL
   | EndOF { return 0; }
-  | expr EndOF { if(ifcond(condBlock)) { cout << endl << "Resultat : " << $1 << endl; } return 0;}
-  | expr EndOL { if(ifcond(condBlock)) { cout << endl << "Resultat : " << $1 << endl; showVars(var);} }
-  | IF expr ':'
+  | expr EndOF { return 0; }
+  | expr EndOL {  }
+  | OUT expr EndOL
     {
-      string a = $2;
-      addCondBlock(condBlock, lineBlock, a, "if", line);
+      insert(OUT, "0");
     }
-  | WHILE expr ':'
+  | OUT expr EndOF
     {
-      string a = $2;
-      addCondBlock(condBlock, lineBlock, a, "while", line);
+      insert(OUT, "0");
+      return 0;
     }
-  | END 
+  | IF expr ':' EndOL
+    {
+      $1.ic_goto = ic;
+      insert(JNZ, "0");
+    }
+    program    
     { 
-      removeCondBlock(condBlock, lineBlock);
+      $1.ic_false = ic;
+      insert(JMP, "0");
+      instructions[$1.ic_goto].second = to_string(ic);
     }
-	;
+    SINON ':' EndOL program    
+    { 
+      instructions[$1.ic_false].second = to_string(ic);
+    }
+    END EndOL {  }
+  | IF expr ':' EndOL
+    {
+      $1.ic_goto = ic;
+      insert(JNZ, "0");
+    }
+    program  
+    { 
+      instructions[$1.ic_goto].second = to_string(ic);
+    }
+    END EndOL { }
+  | WHILE { $1.ic_goto = ic;} expr ':'
+    {
+      $1.ic_false = ic;
+      insert(JNZ, "0");
+    }
+    program
+    {
+      insert(JMP, to_string($1.ic_goto));
+      instructions[$1.ic_false].second = to_string(ic); 
+    }
+    END EndOL {}
+  ;
 
 comp: expr COMP expr
       {
-        if(ifcond(condBlock))
-        {
-          string a = $1, b = $3, c = $2;
-          strcpy($$, compare(a, b, c).c_str());
-        }
+        insert(COMP, $2);
       };
 
-calc:
-    NUM
+val: VAR
       {
-        strcpy($$, to_string(stof($1)).c_str());
+        insert(VAR, $1);
       }
-    | '-' NUM
-      {
-        strcpy($$, to_string(-stof($2)).c_str());
-      }
-
-str:
-    STR
-
-expr:
-    VAR
-    {
-      if(ifcond(condBlock))
-      {
-        if(doesExist(var, $1))
-          strcpy($$, var[$1].c_str());
-        else
-        {
-          error({{undefined, $1}});
-          strcpy($$, undefined);
-        }
-        /*if(test)
-        {
-          rewind(yyin);
-          yyrestart(yyin);
-          test = !test;
-          line = 1;
-        }*/
-      }
-    }
     | BOOL
+      {
+        insert(BOOL, $1);
+      }
+    | NUM
+      {
+        insert(NUM, $1);
+      }
+    | STR
+      {
+        insert(STR, $1); 
+      }
     | comp
-    | calc
-    | str
+    | RULE
+    ;
+
+rule: RULE
+    | rule expr
+      {
+        insert(RULE, "0");
+      }
+    ;
+
+expr: val
     | VAR '=' expr
       {
-        if(ifcond(condBlock))
-        {
-          if(doesExist(var, $3))
-          {
-            var[$1] = $3;
-            strcpy($$, var[$1].c_str());
-          }
-          else if(doesExist(var, $1))
-          {
-            strcpy($$, var[$1].c_str());
-          }
-          else
-          {
-            strcpy($$, undefined);
-          }
-        }
-      }
-    | '(' expr ')'
-      {
-        if(ifcond(condBlock))
-        {
-          $$ = $2; 
-        }
+        insert('=', $1);
       }
     | expr '+' expr
       {
-        if(ifcond(condBlock) && doesExist(var, $1) && doesExist(var, $3))
-        {
-          string s = $1;
-          cout << $1 << " + " << $3 << endl;
-          double d = 0;
-          if(isString(s))
-          {
-            s = toStdStr(s) + toStdStr($3);
-            strcpy($$, toStr(s).c_str());
-          }
-          else if(isString($3))
-          {
-            d = stof($1);
-            s = toStdStr($3);
-            if(isNumber(s))
-            {
-              d += stof(s);
-              strcpy($$, to_string(d).c_str());
-            }
-            else
-            {
-              s = $1;
-              s += toStdStr($3);
-              strcpy($$, toStr(s).c_str());
-            }
-          }
-          else
-          {
-            if(isBool($1))
-            {
-              if(isBool($3))
-              {
-                strcpy($$, (((!strcmp($1, True)? 1 : 0) + (!strcmp($3, True)? 1 : 0))? True : False));
-              }
-              else
-              {
-                d = (!strcmp($1, True)? 1 : 0) + stof($3);
-                strcpy($$, to_string(d).c_str());
-              }
-            }
-            else if(isBool($3))
-            {
-              d = stof($1) + (!strcmp($3, True)? 1 : 0);
-              strcpy($$, to_string(d).c_str());
-            }
-            else
-            {
-              d = stof($1) + stof($3);
-              strcpy($$, to_string(d).c_str());
-            }
-          }
-        }
+        insert(CALC, "+");
+      }
+    | expr '*' expr
+      {
+        insert(CALC, "*");
+      }
+    | expr rule
+    | '(' expr ')'
+      {
       }
     ;
 
@@ -192,6 +158,126 @@ expr:
 
 int yyerror(char *s) {					
     printf("%s\n", s);
+}
+
+string nom(int instruction){
+  switch (instruction){
+   case '='  : return "SET";
+   case RULE : return "RULE";
+   case BOOL : return "BOOL";
+   case CALC : return "CALC";
+   case VAR : return "VAR";
+   case STR : return "STR";
+   case COMP : return "COMP";
+   case NUM  : return "NUM";
+   case OUT     : return "OUT";
+   case JNZ     : return "JNZ";   // Jump if not zero
+   case JMP     : return "JMP";   // Unconditional Jump
+   default  : return to_string (instruction);
+   }
+}
+
+void print_program(){
+  cout << "==== CODE GENERE ====" << endl;
+  int i = 0;
+  for (auto ins : instructions )
+    cout << i++ << '\t' << nom(ins.first) << "\t" << ins.second << endl;
+  cout << "=====================" << endl;  
+}
+
+string depiler(vector<string> &pile) {
+  string t = pile[pile.size()-1];
+  pile.pop_back();
+  return t;
+}
+
+void run_program(){
+  vector<string> pile; 
+  string x,y;
+
+  cout << "===== EXECUTION =====" << endl;
+  ic = 0;
+  bool rule = false;
+  while ( ic < instructions.size() ){
+    auto ins = instructions[ic];
+    switch(ins.first){
+      case '=':
+        rule = false;
+        y = depiler(pile);
+        var[ins.second] = y;
+        //cout << ins.second << " = " << y << endl; 
+        ic++;
+      break;
+
+      case CALC:
+        rule = false;
+        y = depiler(pile);
+        x = depiler(pile);
+        pile.push_back(calc(x, y, ins.second));
+        //cout << x << " calc " << y << endl;
+        ic++;
+      break;
+
+      case COMP:
+        rule = false;
+        y = depiler(pile);
+        x = depiler(pile);
+        pile.push_back(compare(x, y, ins.second));
+        //cout << x << " " << ins.second << " " << y << " = " << compare(x, y, ins.second) << endl;
+        ic++;
+      break;
+
+      case VAR:
+        rule = false;
+        pile.push_back(var[ins.second]);
+        ic++;
+      break;
+    
+      case NUM :
+        rule = false;
+        pile.push_back(ins.second);
+        ic++;
+      break;
+
+      case STR:
+        rule = false;
+        pile.push_back(ins.second);
+        ic++;
+      break;
+
+      case BOOL:
+        rule = false;
+        pile.push_back(ins.second);
+        ic++;
+      break;
+
+      case RULE:
+        y = depiler(pile);
+        x = depiler(pile);
+        pile.push_back((rule ? "" : "<REGLE>::") + x + "::" + y);
+        rule = true;
+        ic++;
+      break;
+    
+      case JMP :
+        rule = false;
+        ic = stoi(ins.second);
+      break;
+    
+      case JNZ :
+        rule = false;
+        x = depiler(pile);
+        ic = ( x == True ? ic + 1 : stoi(ins.second));
+      break;
+
+      case OUT :
+        rule = false;
+        cout << endl << depiler(pile);
+        ic++;
+      break;
+    }
+  }
+  cout << endl << "=====================" << endl;  
 }
 
 int main(int argc, char* argv[]) {
@@ -222,6 +308,8 @@ int main(int argc, char* argv[]) {
     {
       yyparse();
     }
+    print_program();
+    run_program();
     fclose(yyin);
     return 0;
 }
