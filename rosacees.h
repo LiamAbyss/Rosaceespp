@@ -44,9 +44,13 @@ bool isDefined(std::map<std::string, std::string> &var, string s);
 
 string compare(string &a, string &b, string &c);
 
+vector<string> rToVect(string s, string delimiter);
+
 bool isBool(string s);
 
 bool isRule(string s);
+
+bool isFunction(string s);
 
 string calc(string a, string b, string c);
 

@@ -1,20 +1,12 @@
 it = 0
+
 a = "bonour" * 2
-affiche "a = " + a
-affiche retour
-
-b = "j"::"n"
-affiche "b = " + b
-affiche retour
-
-c = " "::"r"
-affiche "c = " + c
-affiche retour
-
-affiche "a * b = " + a*b
-affiche retour
-
-affiche "a * c = " + a*c
-affiche retour
-affiche "a * b * c = " + a*b*c
-
+c = "aaaaaa"
+b = "j"::a::c
+d = fonction(a, b):
+    affiche a
+    affiche b
+    affiche c
+    affiche a + b
+fin
+d(a*b, c)

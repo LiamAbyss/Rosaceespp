@@ -22,6 +22,10 @@ void error(multimap<string, string> errors)
     {
       cout << "Attention : " << f.second << " n'est pas autorisé." << endl;
     }
+    else if(f.first == "function")
+    {
+      cout << "Attention : " << f.second << " n'est pas une fonction." << endl;
+    }
   }
 }
 
@@ -75,6 +79,16 @@ bool isNumber(string s)
 bool isBool(string s)
 {
   return (s == True || s == False);
+}
+
+bool isFunction(string s)
+{
+  if(s.find("::") != string::npos)
+  {
+    if(s.substr(0, s.find("::")) == "<FONC>")
+      return true;
+  }
+  return false;  
 }
 
 bool isRule(string s)
@@ -181,6 +195,8 @@ vector<string> rToVect(string s, string delimiter)
   {
     token = s.substr(0, pos);
     if(res.size() && res[0] == "<REGLE>")
+      res[0] = token;
+    else if(res.size() && res[0] == "<FONC>")
       res[0] = token;
     else
       res.push_back(token);

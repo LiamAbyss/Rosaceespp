@@ -3,9 +3,10 @@
   using namespace std;
   int yyerror(char *s);
 
-  map<string, string> var;
+  vector<map<string, string>> var;
   vector<pair<int, string>> instructions;
   int ic = 0;   // compteur instruction 
+  int argcount = 0;
   void insert(int c, string d) { instructions.push_back(make_pair(c, d)); ic++;};
   // structure pour stocker les adresses pour les sauts conditionnels et autres...
   typedef struct adr {
@@ -31,6 +32,8 @@
 %token <chaine> RULE
 %token <adresse> IF
 %token <adresse> WHILE
+%token <adresse> FONC
+%token ARG
 %token CALC
 %token SINON
 %token END
@@ -42,9 +45,10 @@
 %type <chaine> expr
 %type <chaine> comp
 %type <chaine> val
-%type <chaine> rule
 %left '+' '-'
 %left '*' '/'
+%left RULE
+%left ','
 
 %%
 program: /* empty */		
@@ -103,6 +107,13 @@ line: EndOL
     END EndOL {}
   ;
 
+sinon:
+  | 
+    {
+      //TODO
+    }
+  ;
+
 comp: expr COMP expr
       {
         insert(COMP, $2);
@@ -125,13 +136,27 @@ val: VAR
         insert(STR, $1); 
       }
     | comp
-    | RULE
     ;
 
-rule: RULE
-    | rule expr
+args: VAR
       {
-        insert(RULE, "0");
+        insert(ARG, $1);
+        argcount++;
+      }
+    | VAR ',' args
+      {
+        insert(ARG, $1);
+        argcount++;
+      }
+    ;
+
+param: expr
+      {
+        argcount++;
+      }
+    | expr ',' param
+      {
+        argcount++;
       }
     ;
 
@@ -139,6 +164,25 @@ expr: val
     | VAR '=' expr
       {
         insert('=', $1);
+      }
+    | VAR '=' FONC '(' args ')' ':'
+      {
+        $3.ic_goto = ic;
+        insert(FONC, "0");
+        insert('=', $1);
+        $3.ic_false = ic;
+        insert(JMP, "0");
+        instructions[$3.ic_goto].second = to_string(ic)+";"+to_string(argcount);
+        argcount = 0;
+      }
+      program
+      {
+        instructions[$3.ic_false].second = to_string(ic);
+      }
+      END
+    | VAR '(' param ')'
+      {
+        insert(VAR, $1);
       }
     | expr '+' expr
       {
@@ -148,7 +192,10 @@ expr: val
       {
         insert(CALC, "*");
       }
-    | expr rule
+    | expr RULE expr
+      {
+        insert(RULE, "0");
+      }
     | '(' expr ')'
       {
       }
@@ -164,8 +211,10 @@ string nom(int instruction){
   switch (instruction){
    case '='  : return "SET";
    case RULE : return "RULE";
+   case ARG : return "ARG";
    case BOOL : return "BOOL";
    case CALC : return "CALC";
+   case FONC : return "FONC";
    case VAR : return "VAR";
    case STR : return "STR";
    case COMP : return "COMP";
@@ -192,9 +241,11 @@ string depiler(vector<string> &pile) {
 }
 
 void run_program(){
+  var.push_back(map<string,string>());
   vector<string> pile; 
-  string x,y;
-
+  string x,y,c;
+  vector<string> args;
+  int d = 0;
   cout << "===== EXECUTION =====" << endl;
   ic = 0;
   bool rule = false;
@@ -204,13 +255,12 @@ void run_program(){
       case '=':
         rule = false;
         y = depiler(pile);
-        var[ins.second] = y;
+        var[var.size() - 1][ins.second] = y;
         //cout << ins.second << " = " << y << endl; 
         ic++;
       break;
 
       case CALC:
-        rule = false;
         y = depiler(pile);
         x = depiler(pile);
         pile.push_back(calc(x, y, ins.second));
@@ -219,7 +269,6 @@ void run_program(){
       break;
 
       case COMP:
-        rule = false;
         y = depiler(pile);
         x = depiler(pile);
         pile.push_back(compare(x, y, ins.second));
@@ -228,25 +277,37 @@ void run_program(){
       break;
 
       case VAR:
-        rule = false;
-        pile.push_back(var[ins.second]);
+        if(isFunction(var[var.size() - 1][ins.second]))
+        {
+          vector<string> args = rToVect(var[var.size() - 1][ins.second], "::");
+          rule = false;
+          var.push_back(map<string,string>());
+          var[var.size() - 1]["<RETOUR>"] = to_string(stoi(instructions[stoi(args[0]) - 1].second));
+          var[var.size() - 1]["<SAUT_RETOUR>"] = to_string(ic + 1);
+          ic = stoi(args[0]) - 1;
+          for(int i = args.size() - 1; i >= 1; i--)
+          {
+            var[var.size() - 1][args[i]] = depiler(pile); 
+          }
+        }
+        else
+        {
+          pile.push_back(var[var.size() - 1][ins.second]);
+        }
         ic++;
       break;
     
       case NUM :
-        rule = false;
         pile.push_back(ins.second);
         ic++;
       break;
 
       case STR:
-        rule = false;
         pile.push_back(ins.second);
         ic++;
       break;
 
       case BOOL:
-        rule = false;
         pile.push_back(ins.second);
         ic++;
       break;
@@ -259,6 +320,27 @@ void run_program(){
         ic++;
       break;
     
+      case FONC:
+        c = ins.second.substr(ins.second.find(";")+1, ins.second.size()-ins.second.find(";")-1);
+        for(int i = 0; i < stoi(c); i++)
+        {
+          args.push_back(depiler(pile));
+        }
+        d = stoi(c);
+        c = "<FONC>::" + ins.second.substr(0, ins.second.find(";"));
+        for(int i = 0; i < d; i++)
+        {
+          c += "::" + args[i];
+        }
+        pile.push_back(c); //<FONC>::JMP::arg1::arg2...
+        ic++;
+      break;
+
+      case ARG:
+        pile.push_back(ins.second);
+        ic++;
+      break;
+
       case JMP :
         rule = false;
         ic = stoi(ins.second);
@@ -275,6 +357,13 @@ void run_program(){
         cout << endl << depiler(pile);
         ic++;
       break;
+    }
+    if(var.size() > 1)
+    {
+      if(ic == stoi(var[var.size() - 1]["<RETOUR>"]))
+      {
+        ic = stoi(var[var.size() - 1]["<SAUT_RETOUR>"]);
+      }
     }
   }
   cout << endl << "=====================" << endl;  
