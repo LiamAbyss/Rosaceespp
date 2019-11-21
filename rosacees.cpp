@@ -16,15 +16,15 @@ void error(multimap<string, string> errors)
   {
     if(f.first == undefined)
     {
-      cout << "Attention : La variable " << f.second << " n'est pas définie." << endl;
+      cout << "Erreur : La variable " << f.second << " n'est pas définie." << endl;
     }
     else if(f.first == "impossible")
     {
-      cout << "Attention : " << f.second << " n'est pas autorisé." << endl;
+      cout << "Erreur : " << f.second << " n'est pas autorisé." << endl;
     }
     else if(f.first == "function")
     {
-      cout << "Attention : " << f.second << " n'est pas une fonction." << endl;
+      cout << "Erreur : " << f.second << " n'est pas une fonction." << endl;
     }
   }
 }
@@ -511,4 +511,10 @@ string product(string a, string b)
       return to_string(d);
     }
   }
+}
+
+void pause()
+{
+  cout << "Appuyez sur entrée pour continuer..." << endl;
+  cin.ignore();
 }

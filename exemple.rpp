@@ -1,12 +1,12 @@
-it = 0
-
 a = "bonour" * 2
 c = "aaaaaa"
 b = "j"::a::c
 d = fonction(a, b):
-    affiche a
-    affiche b
-    affiche c
-    affiche a + b
+    c = a+b
+    retourne c
 fin
-d(a*b, c)
+c = d(a*b, c)
+affiche c
+affiche d
+pause
+affiche c

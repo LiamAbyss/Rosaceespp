@@ -17,10 +17,12 @@ si { return IF; }
 sinon { return SINON; }
 tant[' ']que { return WHILE; }
 \<|\>|\<\=|\>\=|\=\=|\!\= { yylval.chaine = strdup(yytext); return COMP; }
-affiche { return OUT;}
+affiche { return OUT; }
 fin { return END; }
 :: { yylval.chaine = strdup(yytext); return RULE; }
-fonction { yylval.chaine = strdup(yytext); return FONC; }
+fonction { return FONC; }
+retourne { return RETURN; }
+pause { return PAUSE; }
 vrai { yylval.chaine = strdup(yytext); return BOOL;}
 faux { yylval.chaine = strdup(yytext); return BOOL;}
 (-)?[0-9]+(\.[0-9]*)? {  yylval.chaine = strdup(yytext); return NUM; }

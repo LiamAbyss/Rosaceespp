@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>    
+#include <fstream>
 #include <string.h>
 #include <string>
 #include <algorithm>
@@ -57,3 +58,5 @@ string calc(string a, string b, string c);
 string add(string a, string b);
 
 string product(string a, string b);
+
+void pause();

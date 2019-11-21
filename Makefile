@@ -8,4 +8,4 @@ run:
 	./rosacees
 
 ex:
-	./rosacees exemple.rpp
+	./rosacees exemple
