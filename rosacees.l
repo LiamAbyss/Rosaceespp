@@ -13,11 +13,13 @@
 %}
 
 %%
+retourligne { return ENDL;}
 si { return IF; }
 sinon { return SINON; }
 tant[' ']que { return WHILE; }
 \<|\>|\<\=|\>\=|\=\=|\!\= { yylval.chaine = strdup(yytext); return COMP; }
 affiche { return OUT; }
+demande { return IN; }
 fin { return END; }
 :: { yylval.chaine = strdup(yytext); return RULE; }
 fonction { return FONC; }
@@ -30,7 +32,6 @@ faux { yylval.chaine = strdup(yytext); return BOOL;}
 [a-zA-Z]+[a-zA-Z0-9]*  { yylval.chaine = strdup(yytext); return VAR; }
 \n                              { std::cout << "line " << ++line << std::endl;return EndOL; }
 \r  {  return EndOL;}
-retour { return '\n';}
 " "    {}
 .      {  return yytext[0]; }
 <<EOF>>                         { static int c = 0; return (c++)? EndOL:EndOF; }

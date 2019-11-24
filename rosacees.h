@@ -21,7 +21,7 @@ extern int line;
 
 void showVars(std::map<std::string, std::string> &var);
 
-void error(multimap<string, string> errors);
+void error(vector<string> e);
 
 void erase(std::map<std::string, std::string> &var, string s);
 
@@ -47,6 +47,8 @@ string compare(string &a, string &b, string &c);
 
 vector<string> rToVect(string s, string delimiter);
 
+string replace(string& s, string a, string b);
+
 bool isBool(string s);
 
 bool isRule(string s);
@@ -58,5 +60,9 @@ string calc(string a, string b, string c);
 string add(string a, string b);
 
 string product(string a, string b);
+
+string divide(string a, string b);
+
+string substract(string a, string b);
 
 void pause();

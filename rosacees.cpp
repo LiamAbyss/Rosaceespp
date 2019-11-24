@@ -10,23 +10,11 @@ void showVars(std::map<std::string, std::string> &var)
   }
 }
 
-void error(multimap<string, string> errors)
+void error(vector<string> e)
 {
-  for(auto &f : errors)
-  {
-    if(f.first == undefined)
-    {
-      cout << "Erreur : La variable " << f.second << " n'est pas définie." << endl;
-    }
-    else if(f.first == "impossible")
-    {
-      cout << "Erreur : " << f.second << " n'est pas autorisé." << endl;
-    }
-    else if(f.first == "function")
-    {
-      cout << "Erreur : " << f.second << " n'est pas une fonction." << endl;
-    }
-  }
+  for(auto s : e)
+    cout << s << endl;
+  exit(-1);
 }
 
 void erase(std::map<std::string, std::string> &var, string s)
@@ -202,9 +190,31 @@ vector<string> rToVect(string s, string delimiter)
       res.push_back(token);
     s.erase(0, pos + delimiter.length());
   }
-  if(!s.empty())
+  if(res.size() && res[0] == "<REGLE>")
+    res[0] = s;
+  else if(res.size() && res[0] == "<FONC>")
+    res[0] = s;
+  else if(!s.empty())
     res.push_back(s);
   return res;
+}
+
+string replace(string& s, string a,  string b)
+{
+	return(s.replace(s.find(a), a.length(), b));
+}
+
+string eraseSubStr(string& mainStr, string toErase)
+{
+	// Search for the substring in string
+	size_t pos = mainStr.find(toErase);
+ 
+	if (pos != std::string::npos)
+	{
+		// If found then erase it from string
+		mainStr.erase(pos, toErase.length());
+	}
+  return mainStr;
 }
 
 string calc(string a, string b, string c)
@@ -213,9 +223,17 @@ string calc(string a, string b, string c)
   {
     return add(a, b);
   }
+  else if(c == "-")
+  {
+    return substract(a, b);
+  }
   else if(c == "*")
   {
     return product(a, b);
+  }
+  else if(c == "/")
+  {
+    return divide(a, b);
   }
 }
 
@@ -260,6 +278,10 @@ string add(string a, string b)
       d = stof(a) + ((b == True)? 1 : 0);
       return to_string(d);
     }
+    else if(isRule(a) && isRule(b))
+    {
+      return a+";"+b;
+    }
     else
     {
       d = stof(a) + stof(b);
@@ -277,61 +299,29 @@ string product(string a, string b)
   {
     if(isRule(b))
     {
-      a = toStdStr(a);
-      vector<string> rule = rToVect(b, "::");
-      /*for(auto f : rule)
+      res = a;
+      vector<string> ruleSet = rToVect(b, ";");
+      for(auto r : ruleSet)
       {
-         cout << f << endl;
-      }*/
-      auto pos = find(rule.begin(), rule.end(), rule[0])+1;
-      if(rule.size() <= 1)
-      {
-        for(auto s : a)
+        a = toStr(res);
+        s = a;
+        res = "";
+        a = toStdStr(a);
+        vector<string> rule = rToVect(r, "::");
+        /*for(auto f : rule)
         {
-          res += s + toStdStr(rule[0]);
-        }
-      }
-      else 
-      {
-        if(isString(rule[0]))
+          cout << f << endl;
+        }*/
+        auto pos = find(rule.begin(), rule.end(), rule[0])+1;
         {
-          if(isNumber(rule[1]))
-          {
-            for(int i = 0; i < a.size(); i++)
-            {
-              res += a[i] + (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : "");
-            }
-          }
-          else if(isString(rule[1]))
-          {
-            vector<size_t> p;
-            for(int i = 1; i < rule.size(); i++)
-            {
-              while(s.find(toStdStr(rule[i])) != string::npos)
-              {
-                p.push_back(s.find(toStdStr(rule[i])) + toStdStr(rule[i]).size() - 2);
-                s[s.find(toStdStr(rule[i]))]++;
-              }
-            }
-            for(int i = 0; i < a.size(); i++)
-            {
-              res += a[i] + (find(p.begin(), p.end(), i) != p.end() ? toStdStr(rule[0]) : "");
-            }            
-          }
-        }
-        else if(isNumber(rule[0]))
-        {
-          for(int i = 0; i < a.size(); i++)
+          if(isString(rule[0]))
           {
             if(isNumber(rule[1]))
             {
-              if(find(pos, rule.end(), to_string(i)) != rule.end())
-                for(int j = 0; j < stof(rule[0]); j++)
-                {
-                  res += a[i];
-                }
-              else
-                res += a[i];
+              for(int i = 0; i < a.size(); i++)
+              {
+                res += a[i] + (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : "");
+              }
             }
             else if(isString(rule[1]))
             {
@@ -344,13 +334,48 @@ string product(string a, string b)
                   s[s.find(toStdStr(rule[i]))]++;
                 }
               }
-              if(find(p.begin(), p.end(), i) != p.end())
-                for(int j = 0; j < stof(rule[0]); j++)
-                {
+              for(int i = 0; i < a.size(); i++)
+              {
+                res += a[i] + (find(p.begin(), p.end(), i) != p.end() ? toStdStr(rule[0]) : "");
+              }            
+            }
+          }
+          else if(isNumber(rule[0]))
+          {
+            if(isNumber(rule[1]))
+            {
+              for(int i = 0; i < a.size(); i++)
+              {
+                if(find(pos, rule.end(), to_string(i)) != rule.end())
+                  for(int j = 0; j < stof(rule[0]); j++)
+                  {
+                    res += a[i];
+                  }
+                else
                   res += a[i];
+              }
+            }
+            else if(isString(rule[1]))
+            {
+              vector<size_t> p;
+              for(int j = 1; j < rule.size(); j++)
+              {
+                while(s.find(toStdStr(rule[j])) != string::npos)
+                {
+                  p.push_back(s.find(toStdStr(rule[j])) + toStdStr(rule[j]).size() - 2);
+                  s[s.find(toStdStr(rule[j]))]++;
                 }
-              else
-                res += a[i];
+              }
+              for(int i = 0; i < a.size(); i++)
+              {
+                if(find(p.begin(), p.end(), i) != p.end())
+                  for(int j = 0; j < stof(rule[0]); j++)
+                  {
+                    res += a[i];
+                  }
+                else
+                  res += a[i];
+              }
             }
           }
         }
@@ -358,15 +383,16 @@ string product(string a, string b)
     }
     else if(isString(b))
     {
-      for(auto s : toStdStr(a))
+      for(auto st : toStdStr(a))
       {
-        res += s + toStdStr(b);
+        res += st + toStdStr(b);
       }
     }
     else if(isNumber(b))
     {
-      for(int i = 0; i < stof(b); i++)
-        res += toStdStr(a);
+      for(auto c : toStdStr(a))
+        for(int i = 0; i < stof(b); i++)
+          res += c;
     }
     return toStr(res);
   }
@@ -375,58 +401,25 @@ string product(string a, string b)
     s = b;
     if(isRule(a))
     {
-      b = toStdStr(b);
-      vector<string> rule = rToVect(a, "::");
-
-      auto pos = find(rule.begin(), rule.end(), rule[0])+1;
-      if(rule.size() <= 1)
+      res = b;
+      vector<string> ruleSet = rToVect(b, ";");
+      for(auto r : ruleSet)
       {
-        for(auto s : b)
+        b = toStr(res);
+        s = b;
+        res = "";
+        b = toStdStr(b);
+        vector<string> rule = rToVect(a, "::");
+        auto pos = find(rule.begin(), rule.end(), rule[0])+1;
         {
-          res += toStdStr(rule[0]) + s;
-        }
-      }
-      else 
-      {
-        if(isString(rule[0]))
-        {
-          if(isNumber(rule[1]))
-          {
-            for(int i = 0; i < b.size(); i++)
-            {
-              res += (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : "") + b[i];
-            }
-          }
-          else if(isString(rule[1]))
-          {
-            vector<size_t> p;
-            for(int i = 1; i < rule.size(); i++)
-            {
-              while(s.find(toStdStr(rule[i])) != string::npos)
-              {
-                p.push_back(s.find(toStdStr(rule[i])) + toStdStr(rule[i]).size() - 2);
-                s[s.find(toStdStr(rule[i]))]++;
-              }
-            }
-            for(int i = 0; i < b.size(); i++)
-            {
-              res += (find(p.begin(), p.end(), i) != p.end() ? toStdStr(rule[0]) : "") + b[i];
-            }                
-          }
-        }
-        else if(isNumber(rule[0]))
-        {
-          for(int i = 0; i < b.size(); i++)
+          if(isString(rule[0]))
           {
             if(isNumber(rule[1]))
             {
-              if(find(pos, rule.end(), to_string(i)) != rule.end())
-                for(int j = 0; j < stof(rule[0]); j++)
-                {
-                  res += b[i];
-                }
-              else
-                res += b[i];
+              for(int i = 0; i < b.size(); i++)
+              {
+                res += (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : "") + b[i];
+              }
             }
             else if(isString(rule[1]))
             {
@@ -439,13 +432,48 @@ string product(string a, string b)
                   s[s.find(toStdStr(rule[i]))]++;
                 }
               }
-              if(find(p.begin(), p.end(), i) != p.end())
-                for(int j = 0; j < stof(rule[0]); j++)
-                {
+              for(int i = 0; i < b.size(); i++)
+              {
+                res += (find(p.begin(), p.end(), i) != p.end() ? toStdStr(rule[0]) : "") + b[i];
+              }                
+            }
+          }
+          else if(isNumber(rule[0]))
+          {
+            if(isNumber(rule[1]))
+            {
+              for(int i = 0; i < b.size(); i++)
+              {
+                if(find(pos, rule.end(), to_string(i)) != rule.end())
+                  for(int j = 0; j < stof(rule[0]); j++)
+                  {
+                    res += b[i];
+                  }
+                else
                   res += b[i];
+              }
+            }
+            else if(isString(rule[1]))
+            {
+              vector<size_t> p;
+              for(int j = 1; j < rule.size(); j++)
+              {
+                while(s.find(toStdStr(rule[j])) != string::npos)
+                {
+                  p.push_back(s.find(toStdStr(rule[j])) + toStdStr(rule[j]).size() - 2);
+                  s[s.find(toStdStr(rule[j]))]++;
                 }
-              else
-                res += b[i];
+              }
+              for(int i = 0; i < b.size(); i++)
+              {
+                if(find(p.begin(), p.end(), i) != p.end())
+                  for(int j = 0; j < stof(rule[0]); j++)
+                  {
+                    res += b[i];
+                  }
+                else
+                  res += b[i];
+              }
             }
           }
         }
@@ -467,10 +495,6 @@ string product(string a, string b)
       
     }
     return toStr(res);
-  }
-  else if(isRule(a) && isRule(b))
-  {
-    return a+";"+b;
   }
   else
   {
@@ -508,6 +532,207 @@ string product(string a, string b)
     else
     {
       d = stof(a) * stof(b);
+      return to_string(d);
+    }
+  }
+}
+
+string divide(string a, string b)
+{
+  double d = 0;
+  string res;
+  string s = a;
+  if(isString(a))
+  {
+    if(isRule(b))
+    {
+      res = a;
+      vector<string> ruleSet = rToVect(b, ";");
+      for(auto r : ruleSet)
+      {
+        a = toStr(res);
+        s = a;
+        res = "";
+        a = toStdStr(a);
+        vector<string> rule = rToVect(r, "::");
+        /*for(auto f : rule)
+        {
+          cout << f << endl;
+        }*/
+        auto pos = find(rule.begin(), rule.end(), rule[0])+1;
+        {
+          if(isString(rule[0]))
+          {
+            if(isNumber(rule[1]))
+            {
+              for(int i = 0; i < s.size(); i++)
+              {
+                s.replace(i, 1, (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : (string)""+s[i]));
+              }
+              res = s;
+            }
+            else if(isString(rule[1]))
+            {
+              vector<size_t> p;
+              for(int i = 1; i < rule.size(); i++)
+              {
+                while(s.find(toStdStr(rule[i])) != string::npos)
+                {
+                  replace(s, toStdStr(rule[i]), toStdStr(rule[0]));
+                }
+              }
+              res = s; 
+            }
+          }
+          else if(isNumber(rule[0]))
+          {
+            error({"Erreur : Impossible d'effectuer une division régulière par une règle numérique."});
+          }
+        }
+      }
+    }
+    else if(isString(b))
+    {
+      s = toStdStr(a);
+      while(s.find(toStdStr(b)) != string::npos)
+        eraseSubStr(s, toStdStr(b));
+      res = s;
+    }
+    else if(isNumber(b))
+    {
+      s = toStdStr(a);
+      for(int i = 0; i < s.size() / stoi(b); i++)
+        res += s[i];
+    }
+    return toStr(res);
+  }
+  else if(isString(b))
+  {
+    s = b;
+    if(isRule(a))
+    {
+      error({"Erreur : Impossible de diviser une règle."});
+    }
+    else if(isNumber(a))
+    {
+      if(canNumber(b))
+      {
+        d = stof(a);
+        if(!stof(toNbr(b)))
+          error({"Erreur : Division par zéro."});
+        d /= stof(toNbr(b));
+        return to_string(d);
+      }
+      else
+      {
+        error({"Erreur : Impossible de diviser un nombre par une chaîne."});
+      }
+    }
+    else
+    {
+      d = stof(a);
+      if(b == False)
+        error({"Erreur : Division par zéro."});
+      return to_string(d);
+    }    
+  }
+  else if(isNumber(a) && isRule(b))
+  {
+    error({"Erreur : Impossible d'effectuer une division régulière sur un nombre."});
+  }
+  else
+  {
+    if(isBool(a))
+    {
+      if(isBool(b))
+      {
+        if(b == False)
+          error({"Erreur : Division par zéro."});
+        return ((((a == True)? 1 : 0) / ((b == True)? 1 : 0))? True : False);
+      }
+      else if(isRule(b))
+      {
+        error({"Erreur : Impossible d'effectuer une division régulière sur un booléen."});
+      }
+      else
+      {
+        d = ((a == True)? 1 : 0) * stof(toNbr(b));
+        return to_string(d);
+      }
+    }
+    else if(isBool(b))
+    {
+      if(b == False)
+        error({"Erreur : Division par zéro."});
+      if(isRule(a))
+      {
+        return a;
+      }
+      d = stof(a);
+      return to_string(d);
+    }
+    else
+    {
+      if(!stof(b))
+        error({"Erreur : Division par zéro."});
+      d = stof(a) / stof(b);
+      return to_string(d);
+    }
+  }
+}
+
+string substract(string a, string b)
+{
+  double d = 0;
+  string res;
+  if(isString(a))
+  {
+    if(isString(b))
+    {
+      res = toStdStr(a);
+      eraseSubStr(res, toStdStr(b));
+    }
+    return toStr(res);
+  }
+  else if(isString(b))
+  {
+    if(isNumber(a) && canNumber(b))
+    {
+      d = stof(a);
+      d -= stof(toNbr(b));
+      return to_string(d);
+    }
+    else
+    {
+      error({"Erreur : Impossible de soustraire une chaîne à un nombre."});
+    }
+  }
+  else
+  {
+    if(isBool(a))
+    {
+      if(isBool(b))
+      {
+        return ((((a == True)? 1 : 0) - ((b == True)? 1 : 0))? True : False);
+      }
+      else
+      {
+        d = ((a == True)? 1 : 0) - stof(toNbr(b));
+        return to_string(d);
+      }
+    }
+    else if(isBool(b))
+    {
+      d = stof(a) - ((b == True)? 1 : 0);
+      return to_string(d);
+    }
+    else if(isRule(a) && isRule(b))
+    {
+      error({"Erreur : Impossible d'effectuer une soustraction régulière sur une règle."});
+    }
+    else
+    {
+      d = stof(a) - stof(b);
       return to_string(d);
     }
   }

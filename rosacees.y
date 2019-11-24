@@ -8,12 +8,16 @@
   vector<pair<int, string>> instructions;
   int ic = 0;   // compteur instruction 
   int argcount = 0;
+  vector<string> includedFiles;
   void insert(int c, string d) { instructions.push_back(make_pair(c, d)); ic++;};
+  void handleIncludes(string fname);
+  void setIncludes(ifstream& f);
   // structure pour stocker les adresses pour les sauts conditionnels et autres...
   typedef struct adr {
     int ic_goto; 
     int ic_false;
   } adr; 
+
 %}
 
 %union
@@ -39,8 +43,10 @@
 %token CALL
 %token CALC
 %token SINON
+%token ENDL
 %token END
 %token OUT
+%token IN
 %token JMP
 %token JNZ
 %token EndOF
@@ -55,13 +61,19 @@
 %left ','
 
 %%
-program: /* empty */		
-       | program line     
+program: /* empty */	
+       | program line	
 	   ;
 
 line: EndOL
-  | EndOF { return 0; }
-  | expr EndOF { return 0; }
+  | EndOF 
+    {
+      return 0; 
+    }
+  | expr EndOF 
+    { 
+      return 0; 
+    }
   | expr EndOL {  }
   | OUT expr EndOL
     {
@@ -72,10 +84,26 @@ line: EndOL
       insert(OUT, "0");
       return 0;
     }
+  | IN VAR EndOL
+    {
+      insert(IN, $2);
+    }
+  | IN VAR EndOF
+    { 
+      insert(IN, $2);
+      return 0;
+    }
   | PAUSE EndOL { insert(PAUSE, "0"); }
-  | PAUSE EndOF { insert(PAUSE, "0"); return 0; } 
+  | PAUSE EndOF 
+    { 
+      insert(PAUSE, "0"); 
+      return 0; 
+    } 
   | retour EndOL
-  | retour EndOF { return 0; }
+  | retour EndOF 
+    {
+      return 0; 
+    }
   | IF expr ':' EndOL
     {
       ifGoto.push_back(vector<pair<int,int>>());
@@ -189,6 +217,10 @@ retour:
       ;
 
 expr: val
+    | ENDL
+      {
+        insert(ENDL, "0");
+      }
     | VAR '=' expr
       {
         insert('=', $1);
@@ -216,9 +248,17 @@ expr: val
       {
         insert(CALC, "+");
       }
+    | expr '-' expr
+      {
+        insert(CALC, "-");
+      }
     | expr '*' expr
       {
         insert(CALC, "*");
+      }
+    | expr '/' expr
+      {
+        insert(CALC, "/");
       }
     | expr RULE expr
       {
@@ -242,6 +282,7 @@ string nom(int instruction){
    case ARG : return "ARG";
    case CALL : return "CALL";
    case RETURN : return "RETURN";
+   case ENDL : return "ENDL";
    case BOOL : return "BOOL";
    case CALC : return "CALC";
    case FONC : return "FONC";
@@ -250,6 +291,7 @@ string nom(int instruction){
    case COMP : return "COMP";
    case NUM  : return "NUM";
    case OUT     : return "OUT";
+   case IN : return "IN";
    case JNZ     : return "JNZ";   // Jump if not zero
    case JMP     : return "JMP";   // Unconditional Jump
    default  : return to_string (instruction);
@@ -344,6 +386,11 @@ void run_program(){
         ic++;
       break;
 
+      case ENDL:
+        pile.push_back("");
+        ic++;
+      break;
+
       case CALL:
         if(isFunction(var[var.size() - 1][ins.second]))
         {
@@ -360,7 +407,6 @@ void run_program(){
         }
         else
         {
-          error({{"function", ins.second}});
           return;
         }
         ic++;
@@ -441,6 +487,12 @@ void run_program(){
         cout << depiler(pile) << endl;
         ic++;
       break;
+
+      case IN :
+        rule = false;
+        cin >> var[var.size() - 1][ins.second];
+        ic++;
+      break;
     }
     if(var.size() > 1)
     {
@@ -452,6 +504,51 @@ void run_program(){
     }
   }
   cout << endl << "=====================" << endl;  
+}
+
+void setIncludes(ifstream& f)
+{
+  string s;
+  getline(f, s);
+  while(s.substr(0, s.find(" ")) == "importe")
+  {
+    s = s.substr(s.find("\""), s.size()-1);
+    if(!isalpha(s[s.size() - 1]) && s[s.size() - 1] != '"')
+      removeFromStr(s, s[s.size() - 1]);
+    if(find(includedFiles.begin(), includedFiles.end(), toStdStr(s)) != includedFiles.end())
+      return;
+    includedFiles.push_back(toStdStr(s));
+    ifstream g(includedFiles[includedFiles.size() - 1]);
+    setIncludes(g);
+    g.close();
+    getline(f, s);
+  }
+}
+
+void handleIncludes(string fname)
+{
+  includedFiles.push_back(fname);
+  ifstream f(includedFiles[0]);
+  string s;
+  setIncludes(f);
+  f.close();
+  ofstream f2("tmpCompil.rppx");
+  while(includedFiles.size())
+  {
+    f.open(includedFiles[includedFiles.size() - 1].c_str());
+    if(!f.is_open())
+      break;
+    includedFiles.pop_back();
+    while(!f.eof())
+    {
+      getline(f, s);
+      if(s.substr(0, s.find(" ")) != (string)"importe")
+      {
+        f2 << s << endl;
+      }
+    }
+    f.close();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -474,9 +571,11 @@ int main(int argc, char* argv[]) {
 
     if(argc > 1) 
     {
-      yyin = fopen(((string)argv[1] + ".rpp").c_str(), "r");
-      rewind(yyin);
+      handleIncludes((string)argv[1] + ".rpp");
+      yyin = fopen("tmpCompil.rppx", "r");
       yyparse();  
+      fclose(yyin);
+      remove("tmpCompil.rppx");
     }				
     else
     {
@@ -485,6 +584,5 @@ int main(int argc, char* argv[]) {
     print_program(argv[1]);
     run_program();
     //compile(argv[1]);
-    fclose(yyin);
     return 0;
 }

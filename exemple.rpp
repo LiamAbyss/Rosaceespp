@@ -1,12 +1,5 @@
-a = "bonour" * 2
-c = "aaaaaa"
-b = "j"::a::c
-d = fonction(a, b):
-    c = a+b
-    retourne c
-fin
-c = d(a*b, c)
-affiche c
-affiche d
-pause
-affiche c
+importe "salut.rpp"
+c = 3
+coucou()
+affiche retourligne
+salut()
