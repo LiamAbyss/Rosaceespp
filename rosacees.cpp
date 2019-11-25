@@ -117,6 +117,10 @@ string compare(string &a, string &b, string &c)
         return ((stof(a) == stof(b))? True : False);
       else if(c == "<")
         return ((stof(a) < stof(b))? True : False);
+      else if(c == "<=")
+        return ((stof(a) <= stof(b))? True : False);
+      else if(c == ">=")
+        return ((stof(a) >= stof(b))? True : False);
     }
     else if(canNumber(b))
     {
@@ -129,6 +133,8 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return (((stoi(a) && b == True) || (!stoi(a) && b == False))? True : False);
+      else if(c == "<")
+        return ((stoi(a) < (b == True ? 1 : 0)) ? True : False);
     }
   }
   else if(isNumber(b))
@@ -144,6 +150,8 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return (((stoi(b) && a == True) || (!stoi(b) && a == False))? True : False);
+      else if(c == "<")
+        return (((a == True ? 1 : 0) < stoi(b)) ? True : False);
     }
   }
   else if(isBool(a))
@@ -152,11 +160,15 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return ((a == b)? True : False);
+      else if(c == "<")
+        return (((a == True ? 1 : 0) < (b == True ? 1 : 0)) ? True : False);
     }
     else
     {
       if(c == "==")
         return (((a == True && b.size()) || (a == False && b.empty()))? True : False);
+      else if(c == "<")
+        return (((a == True ? 1 : 0) < (b.size() ? 1 : 0)) ? True : False);
     }
     
   }
@@ -164,13 +176,19 @@ string compare(string &a, string &b, string &c)
   {
     if(c == "==")
       return (((b == True && a.size()) || (b == False && a.empty()))? True : False);
+    else if(c == "<")
+      return (((a.size() ? 1 : 0) < (b == True ? 1 : 0)) ? True : False);
   }
-  else
+  else if(isString(a) && isString(b))
   {
     if(c == "==")
       return ((b == a)? True : False);
     else if(c == "<")
       return ((b < a)? True : False);
+  }
+  else
+  {
+    error({"Erreur : Impossible de comparer des règles."});
   }
 }
 

@@ -16,6 +16,7 @@
 retourligne { return ENDL;}
 si { return IF; }
 sinon { return SINON; }
+pour { return POUR; }
 tant[' ']que { return WHILE; }
 \<|\>|\<\=|\>\=|\=\=|\!\= { yylval.chaine = strdup(yytext); return COMP; }
 affiche { return OUT; }

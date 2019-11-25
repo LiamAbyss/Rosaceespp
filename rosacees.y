@@ -39,6 +39,7 @@
 %token <adresse> WHILE
 %token <adresse> FONC
 %token <chaine> RETURN
+%token <adresse> POUR
 %token ARG
 %token CALL
 %token CALC
@@ -54,6 +55,7 @@
 %token PAUSE
 %type <chaine> expr
 %type <chaine> comp
+%type <chaine> pas
 %type <chaine> val
 %left '+' '-'
 %left '*' '/'
@@ -132,7 +134,51 @@ line: EndOL
       instructions[$1.ic_false].second = to_string(ic); 
     }
     END EndOL {}
+  | POUR  VAR '=' NUM ':' NUM pas ':'
+    {
+      insert(NUM, $4);
+      insert('=', $2);
+      $1.ic_goto = ic;
+      if(stof($4) <= stof($6))
+      {
+        insert(VAR, $2);
+        insert(NUM, $6);
+        insert(COMP, "<=");
+      }
+      else
+      {
+        insert(VAR, $2);
+        insert(NUM, $6);
+        insert(COMP, ">=");
+      }
+      $1.ic_false = ic;
+      insert(JNZ, "0");
+    }
+    program
+    {
+      if(stof($4) <= stof($6))
+      {
+        insert(VAR, $2);
+        insert(NUM, (stof($7) ? $7 : "1"));
+        insert(CALC, "+");
+        insert('=', $2);
+      }
+      else
+      {
+        insert(VAR, $2);
+        insert(NUM, (stof($7) ? $7 : "1"));
+        insert(CALC, "-");
+        insert('=', $2);
+      }
+      insert(JMP, to_string($1.ic_goto));
+      instructions[$1.ic_false].second = to_string(ic);
+    }
+    END EndOL
   ;
+
+pas:  { $$ = (char*)"0"; }
+    | '(' NUM ')' { $$ = $2; }
+    ;
 
 sinon:
   | SINON IF expr ':' EndOL
@@ -205,8 +251,7 @@ param:
       }
     ;
 
-retour: 
-      | RETURN
+retour: RETURN
         {
           insert(RETURN, "0");
         }
@@ -484,7 +529,16 @@ void run_program(){
 
       case OUT :
         rule = false;
-        cout << depiler(pile) << endl;
+        x = depiler(pile);
+        for(int i = x.size() - 1; i >= 0; i--)
+        {
+          if(!(x[i] == '0' || x[i] == '.'))
+          {
+            x.erase(x.begin() + i + 1, x.end());
+            break;
+          }
+        }
+        cout << x << endl;
         ic++;
       break;
 

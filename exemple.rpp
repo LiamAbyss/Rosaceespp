@@ -3,3 +3,7 @@ c = 3
 coucou()
 affiche retourligne
 salut()
+
+pour i = 2:7 :
+    affiche i
+fin
