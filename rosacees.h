@@ -13,6 +13,7 @@ extern void yyrestart ( FILE *input_file );
 extern int yylex ();
 extern FILE *yyin;
 extern int line;
+extern vector<string> linefile;
 
 #define undefined "undefined"
 #define none "none"
@@ -49,9 +50,15 @@ vector<string> rToVect(string s, string delimiter);
 
 string replace(string& s, string a, string b);
 
+string type(string s);
+
 bool isBool(string s);
 
 bool isRule(string s);
+
+bool isFile(string s);
+
+bool isTab(string s);
 
 bool isFunction(string s);
 

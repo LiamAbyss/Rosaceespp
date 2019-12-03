@@ -4,10 +4,13 @@
   int yyerror(char *s);
 
   vector<map<string, string>> var;
+  vector<map<string, vector<string>>> tab;
+  vector<map<string, FILE*>> files;
   vector<vector<pair<int,int>>> ifGoto;
   vector<pair<int, string>> instructions;
   int ic = 0;   // compteur instruction 
   int argcount = 0;
+  int getCount = 0;
   vector<string> includedFiles;
   void insert(int c, string d) { instructions.push_back(make_pair(c, d)); ic++;};
   void handleIncludes(string fname);
@@ -17,6 +20,17 @@
     int ic_goto; 
     int ic_false;
   } adr; 
+
+  void exitFunc()
+  {
+    for(auto& v : files)
+    {
+      for(auto& f : v)
+      {
+        fclose(f.second);
+      }
+    }
+  }
 
 %}
 
@@ -40,7 +54,18 @@
 %token <adresse> FONC
 %token <chaine> RETURN
 %token <adresse> POUR
+%token FICHIER
+%token OBJ
 %token ARG
+%token DELETE
+%token RENAME
+%token OR
+%token READ
+%token WRITE
+%token APP
+%token TO
+%token SIZEOF
+%token GET
 %token CALL
 %token CALC
 %token SINON
@@ -134,46 +159,61 @@ line: EndOL
       instructions[$1.ic_false].second = to_string(ic); 
     }
     END EndOL {}
-  | POUR  VAR '=' NUM ':' NUM pas ':'
+  | POUR  VAR '=' expr ':' expr pas ':'
     {
-      insert(NUM, $4);
+      insert('=', (string)$2 + "max");
       insert('=', $2);
       $1.ic_goto = ic;
-      if(stof($4) <= stof($6))
-      {
-        insert(VAR, $2);
-        insert(NUM, $6);
-        insert(COMP, "<=");
-      }
-      else
-      {
-        insert(VAR, $2);
-        insert(NUM, $6);
-        insert(COMP, ">=");
-      }
+      insert(VAR, $2);
+      insert(VAR, (string)$2 + "max");
+      insert(COMP, "!=");
       $1.ic_false = ic;
       insert(JNZ, "0");
     }
     program
     {
-      if(stof($4) <= stof($6))
-      {
-        insert(VAR, $2);
-        insert(NUM, (stof($7) ? $7 : "1"));
-        insert(CALC, "+");
-        insert('=', $2);
-      }
-      else
-      {
-        insert(VAR, $2);
-        insert(NUM, (stof($7) ? $7 : "1"));
-        insert(CALC, "-");
-        insert('=', $2);
-      }
+      insert(VAR, $2);
+      insert(NUM, (stof($7) ? $7 : "1"));
+      insert(CALC, "+");
+      insert('=', $2);
       insert(JMP, to_string($1.ic_goto));
       instructions[$1.ic_false].second = to_string(ic);
     }
     END EndOL
+  | DELETE STR
+    {
+      insert(STR, $2);
+      insert(DELETE, "0");
+    }
+    | DELETE VAR
+    {
+      insert(VAR, $2);
+      insert(DELETE, "0");
+    }
+  | RENAME STR TO STR
+    {
+      insert(STR, $2);
+      insert(STR, $4);
+      insert(RENAME, "0");
+    }
+    | RENAME STR TO VAR
+    {
+      insert(STR, $2);
+      insert(VAR, $4);
+      insert(RENAME, "0");
+    }
+    | RENAME VAR TO STR
+    {
+      insert(VAR, $2);
+      insert(STR, $4);
+      insert(RENAME, "0");
+    }
+    | RENAME VAR TO VAR
+    {
+      insert(VAR, $2);
+      insert(VAR, $4);
+      insert(RENAME, "0");
+    }
   ;
 
 pas:  { $$ = (char*)"0"; }
@@ -206,11 +246,29 @@ sinon:
 comp: expr COMP expr
       {
         insert(COMP, $2);
-      };
+      }
+    | comp OR comp
+    ;
+
+getter: '[' expr ']'
+        {
+          getCount++;
+        }
+      | '[' expr ']' getter
+        {
+          getCount++;
+        }
+      ;
 
 val: VAR
       {
         insert(VAR, $1);
+      }
+    | VAR getter
+      {
+        insert(VAR, $1);
+        insert(GET, to_string(getCount));
+        getCount = 0;
       }
     | BOOL
       {
@@ -266,10 +324,54 @@ expr: val
       {
         insert(ENDL, "0");
       }
+    | APP expr TO VAR
+      {
+        insert(APP, $4);
+      }
+    | SIZEOF '(' VAR ')'
+      {
+        insert(SIZEOF, $3);
+      }
+    | READ VAR
+      {
+        insert(READ, $2);
+      }
+    | WRITE expr TO VAR
+      {
+        insert(WRITE, $4);
+      }
     | VAR '=' expr
       {
         insert('=', $1);
       }
+    | VAR '=' FICHIER'('STR ',' STR ')'
+      {
+        insert(STR, $5);
+        insert(STR, $7);
+        insert(FICHIER, (string)$5+(string)";"+(string)$7);
+        insert('=', $1);
+      }
+      | VAR '=' FICHIER'('VAR ',' STR ')'
+        {
+          insert(VAR, $5);
+          insert(STR, $7);
+          insert(FICHIER, (string)$5+(string)";"+(string)$7);
+          insert('=', $1);
+        }
+      | VAR '=' FICHIER'('STR ',' VAR ')'
+        {
+          insert(STR, $5);
+          insert(VAR, $7);
+          insert(FICHIER, (string)$5+(string)";"+(string)$7);
+          insert('=', $1);
+        }
+      | VAR '=' FICHIER'('VAR ',' VAR ')'
+        {
+          insert(VAR, $5);
+          insert(VAR, $7);
+          insert(FICHIER, (string)$5+(string)";"+(string)$7);
+          insert('=', $1);
+        }
     | VAR '=' FONC '(' args ')' ':'
       {
         $3.ic_goto = ic;
@@ -288,6 +390,7 @@ expr: val
     | VAR '(' param ')'
       {
         insert(CALL, $1);
+        argcount = 0;
       }
     | expr '+' expr
       {
@@ -327,10 +430,18 @@ string nom(int instruction){
    case ARG : return "ARG";
    case CALL : return "CALL";
    case RETURN : return "RETURN";
+   case APP : return "APP";
+   case SIZEOF : return "SIZEOF";
+   case FICHIER : return "FICHIER";
+   case GET : return "GET";
    case ENDL : return "ENDL";
    case BOOL : return "BOOL";
    case CALC : return "CALC";
+   case READ : return "LECT";
+   case WRITE : return "ECR";
    case FONC : return "FONC";
+   case RENAME : return "RENAME";
+   case DELETE : return "DELETE";
    case VAR : return "VAR";
    case STR : return "STR";
    case COMP : return "COMP";
@@ -393,10 +504,14 @@ void compile(string filename)
 
 void run_program(){
   var.push_back(map<string,string>());
+  tab.push_back(map<string, vector<string>>());
+  files.push_back(map<string, FILE*>());
   vector<string> pile; 
+  char ch = '0';
+  FILE* file;
   string x,y,c;
   vector<string> args;
-  int d = 0;
+  int d = 0, couche = 0;
   cout << "===== EXECUTION =====" << endl;
   ic = 0;
   bool rule = false;
@@ -410,8 +525,157 @@ void run_program(){
       case '=':
         rule = false;
         y = depiler(pile);
+        if(isFile(var[var.size() - 1][ins.second]))
+        {
+          fclose(files[files.size() - 1][rToVect(var[var.size() - 1][ins.second], "::")[0]]);
+        }
+        if(isNumber(y))
+        {
+          y = to_string(stof(y));
+        }
+        else if(isTab(y))
+        {
+          tab[tab.size() - 1][ins.second] = tab[tab.size() - 1][rToVect(y, "::")[0]];
+          var[var.size() - 1][ins.second] = "<TAB>::" + ins.second;
+          ic++;
+          break;
+        }
         var[var.size() - 1][ins.second] = y;
+        var[var.size() - 1]["<VALEUR_RETOUR>"] = undefined;
         //cout << ins.second << " = " << y << endl; 
+        ic++;
+      break;
+
+      case APP:
+        rule = false;
+        y = depiler(pile);
+        if(var[var.size() - 1][ins.second].empty())
+        {
+          tab[tab.size() - 1][ins.second].push_back(y);
+          var[var.size() - 1][ins.second] = "<TAB>::" + ins.second;
+        }
+        else if(isTab(var[var.size() - 1][ins.second]))
+        {
+          string name = rToVect(var[var.size() - 1][ins.second], "::")[0];
+          tab[tab.size() - 1][name].push_back(y);
+        }
+        else
+        {
+          tab[tab.size() - 1][ins.second].push_back(var[var.size() - 1][ins.second]);
+          tab[tab.size() - 1][ins.second].push_back(y);
+          var[var.size() - 1][ins.second] = "<TAB>::" + ins.second;
+        }
+        ic++;
+      break;
+
+      case SIZEOF:
+        pile.push_back(to_string(tab[tab.size() - 1][ins.second].size()));
+        ic++;
+      break;
+
+      case GET:
+        args.clear();
+        x = depiler(pile);
+        if(isTab(x))
+        {
+          x = rToVect(x, "::")[0];
+          for(int i = 0; i < stoi(ins.second); i++)
+          {
+            args.push_back(depiler(pile));
+          } 
+          for(int i = args.size()-1; i >= 0; i--)
+          {
+            if(stof(args[i]) < tab[tab.size() - 1][x].size())
+            {
+              pile.push_back(tab[tab.size() - 1][x][stoi(args[i])]);
+              if(stoi(ins.second) > args.size() - i)
+                x = rToVect(depiler(pile), "::")[0];
+            }
+            else
+            {
+              error({"Erreur : Sortie du tableau " + x + " à l'indice " + args[i]});
+            }
+          }
+        }
+        else if(isString(x))
+        {
+          x = toStdStr(x);
+          y = depiler(pile);
+          if(stoi(y) < x.size())
+          {
+            x = x[stoi(y)];
+            pile.push_back(toStr(x));
+          }
+          else
+          {
+            error({"Erreur : Sortie du tableau " + x + " à l'indice " + y});
+          }
+        }
+        args.clear();
+        ic++;
+      break;
+
+      case READ:
+        if(isFile(var[var.size() - 1][ins.second]))
+        {
+          ch = fgetc(files[files.size() - 1][rToVect(var[var.size() - 1][ins.second], "::")[0]]);
+          x = "\"";
+          x = x + ch + "\"";
+          if(ch != EOF)
+            pile.push_back(x);
+          else
+            pile.push_back("FDF");
+        }
+        else
+        {
+          error({"Erreur : Impossible de lire un fichier de type " + type(var[var.size() - 1][ins.second])});
+        }
+        ic++;
+      break;
+
+      case WRITE:
+        if(isFile(var[var.size() - 1][ins.second]))
+        {
+          x = depiler(pile);
+          for(int i = x.size() - 1; i >= 0; i--)
+          {
+            if(!(x[i] == '0' || x[i] == '.') || i == 0)
+            {
+              x.erase(x.begin() + i + 1, x.end());
+              break;
+            }
+          }
+          fputs(toStdStr(x).c_str(), files[files.size() - 1][rToVect(var[var.size() - 1][ins.second], "::")[0]]);
+        }
+        else
+        {
+          error({"Erreur : Impossible d'écrire dans un fichier de type " + type(var[var.size() - 1][ins.second])});
+        }
+        ic++;        
+      break;
+
+      case DELETE:
+        x = depiler(pile);
+        remove(toStdStr(x).c_str());
+        ic++;
+      break;
+
+      case RENAME:
+        x = depiler(pile);
+        y = depiler(pile);
+        rename(toStdStr(y).c_str(), toStdStr(x).c_str());
+        ic++;
+      break;
+
+      case FICHIER:
+        x = rToVect(ins.second, ";")[0];
+        y = rToVect(ins.second, ";")[1];
+        y = depiler(pile);
+        x = depiler(pile);
+        file = fopen(toStdStr(x).c_str(), toStdStr(y).c_str());
+        files[files.size() - 1][toStdStr(x)] = file;
+        pile.push_back("<FICHIER>::" + toStdStr(x));
+        file = NULL;
         ic++;
       break;
 
@@ -432,28 +696,52 @@ void run_program(){
       break;
 
       case ENDL:
-        pile.push_back("");
+        rule = false;
+        pile.push_back("\n");
         ic++;
       break;
 
       case CALL:
-        if(isFunction(var[var.size() - 1][ins.second]))
+        couche = var.size() - 1;
+        while(var[couche][ins.second].empty())
         {
-          vector<string> args = rToVect(var[var.size() - 1][ins.second], "::");
-          rule = false;
+          if(couche < 0)
+          {
+            couche = 0;
+            break;
+          }
+          couche--;
+        }
+        if(isFunction(var[couche][ins.second]))
+        {
+          args.clear();
+          args = rToVect(var[couche][ins.second], "::");
           var.push_back(map<string,string>());
+          tab.push_back(map<string, vector<string>>());
+          files.push_back(map<string, FILE*>());
           var[var.size() - 1]["<RETOUR>"] = to_string(stoi(instructions[stoi(args[0]) - 1].second));
           var[var.size() - 1]["<SAUT_RETOUR>"] = to_string(ic + 1);
           ic = stoi(args[0]) - 1;
           for(int i = args.size() - 1; i >= 1; i--)
           {
-            var[var.size() - 1][args[i]] = depiler(pile); 
+            var[var.size() - 1][args[i]] = depiler(pile);
+            if(isTab(var[var.size() - 1][args[i]]))
+            {
+              x = rToVect(var[var.size() - 1][args[i]], "::")[0];
+              tab[tab.size() - 1][args[i]] = tab[tab.size() - 2][x];
+              var[var.size() - 1][args[i]] = "<TAB>::" + args[i];
+            }
+            else if(isFile(var[var.size() - 1][args[i]]))
+            {
+              files[files.size() - 1][rToVect(var[var.size() - 1][args[i]], "::")[0]] = files[files.size() - 2][rToVect(var[var.size() - 1][args[i]], "::")[0]];
+            }
           }
         }
         else
         {
-          return;
+          error({"Erreur : " + ins.second + " n'est pas une fonction."});
         }
+        args.clear();
         ic++;
       break;
 
@@ -468,6 +756,14 @@ void run_program(){
       break;
 
       case STR:
+        while(ins.second.find("\\n") != string::npos)
+        {
+          replace(ins.second, "\\n", "\n");
+        }
+        while(ins.second.find("\\r") != string::npos)
+        {
+          replace(ins.second, "\\r", "\r");
+        }
         pile.push_back(ins.second);
         ic++;
       break;
@@ -486,6 +782,8 @@ void run_program(){
       break;
     
       case FONC:
+        rule = false;
+        args.clear();
         c = ins.second.substr(ins.second.find(";")+1, ins.second.size()-ins.second.find(";")-1);
         for(int i = 0; i < stoi(c); i++)
         {
@@ -498,20 +796,28 @@ void run_program(){
           c += "::" + args[i];
         }
         pile.push_back(c); //<FONC>::JMP::arg1::arg2...
+        args.clear();
         ic++;
       break;
 
       case RETURN:
+        rule = false;
         x = undefined;
         if(stoi(ins.second))
         {
           x = depiler(pile);
+        }
+        if(isTab(x))
+        {
+          var[var.size() - 2]["<VALEUR_RETOUR>"] = x;
+          tab[tab.size() - 2][rToVect(x, "::")[0]] = tab[tab.size() - 1][rToVect(x, "::")[0]];
         }
         pile.push_back(x);
         ic++;
       break;
 
       case ARG:
+        rule = false;
         pile.push_back(ins.second);
         ic++;
       break;
@@ -532,19 +838,21 @@ void run_program(){
         x = depiler(pile);
         for(int i = x.size() - 1; i >= 0; i--)
         {
-          if(!(x[i] == '0' || x[i] == '.'))
+          if(!(x[i] == '0' || x[i] == '.') || i == 0)
           {
             x.erase(x.begin() + i + 1, x.end());
             break;
           }
         }
-        cout << x << endl;
+        cout << toStdStr(x) << endl;
         ic++;
       break;
 
       case IN :
         rule = false;
         cin >> var[var.size() - 1][ins.second];
+        if(!isNumber(var[var.size() - 1][ins.second]) && !isBool(var[var.size() - 1][ins.second]))
+          var[var.size() - 1][ins.second] = toStr(var[var.size() - 1][ins.second]);
         ic++;
       break;
     }
@@ -554,6 +862,8 @@ void run_program(){
       {
         ic = stoi(var[var.size() - 1]["<SAUT_RETOUR>"]);
         var.pop_back();
+        tab.pop_back();
+        files.pop_back();
       }
     }
   }
@@ -622,7 +932,7 @@ int main(int argc, char* argv[]) {
     cout << "|                     `\\\\,               |" << endl;
     cout << "|                       \\|               |" << endl;
     cout << " `````````````````````````````````````````" << endl;
-
+    atexit(&exitFunc);
     if(argc > 1) 
     {
       handleIncludes((string)argv[1] + ".rpp");

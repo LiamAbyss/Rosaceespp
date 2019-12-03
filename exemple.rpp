@@ -1,9 +1,25 @@
 importe "salut.rpp"
+importe "formulaire.rpp"
 c = 3
+affiche c
 coucou()
 affiche retourligne
 salut()
 
-pour i = 2:7 :
-    affiche i
+pour i = 0:15+5 :
+    ajoute i à c
 fin
+pour i = 0:taille(c) :
+    affiche c[i]
+fin
+
+renvoi = fonction(tab):
+    affiche tab[14]
+    retourne tab
+fin
+
+b = renvoi(c)
+affiche b[7]
+affiche c[7]
+
+//remplirFormulaire("alire.txt")

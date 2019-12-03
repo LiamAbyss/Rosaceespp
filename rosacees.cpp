@@ -13,7 +13,7 @@ void showVars(std::map<std::string, std::string> &var)
 void error(vector<string> e)
 {
   for(auto s : e)
-    cout << s << endl;
+    cout << "| " << s << endl;
   exit(-1);
 }
 
@@ -69,6 +69,24 @@ bool isBool(string s)
   return (s == True || s == False);
 }
 
+string type(string s)
+{
+  if(isBool(s))
+    return "\"<BOOL>\"";
+  else if(isString(s))
+    return "\"<STR>\"";
+  else if(isNumber(s))
+    return "\"<NUM>\"";
+  else if(isFunction(s))
+    return "\"<FONC>\"";
+  else if(isTab(s))
+    return "\"<TAB>\"";
+  else if(isFile(s))
+    return "\"<FICHIER>\"";
+  else
+    return undefined;
+}
+
 bool isFunction(string s)
 {
   if(s.find("::") != string::npos)
@@ -77,6 +95,26 @@ bool isFunction(string s)
       return true;
   }
   return false;  
+}
+
+bool isFile(string s)
+{
+  if(s.find("::") != string::npos)
+  {
+    if(s.substr(0, s.find("::")) == "<FICHIER>")
+      return true;
+  }
+  return false;  
+}
+
+bool isTab(string s)
+{
+  if(s.find("::") != string::npos)
+  {
+    if(s.substr(0, s.find("::")) == "<TAB>")
+      return true;
+  }
+  return false;
 }
 
 bool isRule(string s)
@@ -109,14 +147,22 @@ bool isDefined(std::map<std::string, std::string> &var, string s)
 
 string compare(string &a, string &b, string &c)
 {
-  if(isNumber(a))
+  if(isRule(a) || isRule(b))
+  {
+    error({"Erreur : Impossible de comparer des règles."});
+  }
+  else if(isNumber(a))
   {
     if(isNumber(b))
     {
       if(c == "==")
         return ((stof(a) == stof(b))? True : False);
+      else if(c == "!=")
+        return ((stof(a) != stof(b))? True : False);
       else if(c == "<")
         return ((stof(a) < stof(b))? True : False);
+      else if(c == ">")
+        return ((stof(a) > stof(b))? True : False);
       else if(c == "<=")
         return ((stof(a) <= stof(b))? True : False);
       else if(c == ">=")
@@ -126,15 +172,31 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return ((a == toNbr(toStdStr(b)))? True : False);
+      else if(c == "!=")
+        return ((a != toNbr(toStdStr(b)))? True : False);
       else if(c == "<")
         return ((stof(a) < stof(toStdStr(b)))? True : False);
+      else if(c == ">")
+        return ((stof(a) > stof(toStdStr(b)))? True : False);
+      else if(c == "<=")
+        return ((stof(a) <= stof(toStdStr(b)))? True : False);
+      else if(c == ">=")
+        return ((stof(a) >= stof(toStdStr(b)))? True : False);
     }
     else if(isBool(b))
     {
       if(c == "==")
-        return (((stoi(a) && b == True) || (!stoi(a) && b == False))? True : False);
+        return (((stof(a) && b == True) || (!stof(a) && b == False))? True : False);
+      else if(c == "!=")
+        return (((stof(a) && b != True) || (!stof(a) && b == True))? True : False);
       else if(c == "<")
-        return ((stoi(a) < (b == True ? 1 : 0)) ? True : False);
+        return ((stof(a) < (b == True ? 1 : 0)) ? True : False);
+      else if(c == ">")
+        return ((stof(a) > (b == True ? 1 : 0)) ? True : False);
+      else if(c == "<=")
+        return ((stof(a) <= (b == True ? 1 : 0))? True : False);
+      else if(c == ">=")
+        return ((stof(a) >= (b == True ? 1 : 0))? True : False);
     }
   }
   else if(isNumber(b))
@@ -143,15 +205,31 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return ((b == toNbr(toStdStr(a)))? True : False);
+      else if(c == "!=")
+        return ((b != toNbr(toStdStr(a)))? True : False);
       else if(c == "<")
-        return ((stof(b) < stof(toStdStr(a)))? True : False);
+        return (stof(toStdStr(a)) < (stof(b))? True : False);
+      else if(c == ">")
+        return (stof(toStdStr(a)) > (stof(b))? True : False);
+      else if(c == "<=")
+        return (stof(toStdStr(a)) <= (stof(b))? True : False);
+      else if(c == ">=")
+        return (stof(toStdStr(a)) >= (stof(b))? True : False);
     }
     else if(isBool(a))
     {
       if(c == "==")
-        return (((stoi(b) && a == True) || (!stoi(b) && a == False))? True : False);
+        return (((stof(b) && a == True) || (!stof(b) && a == False))? True : False);
+      else if(c == "!=")
+        return (((stof(b) && a != True) || (!stof(b) && a != False))? True : False);
       else if(c == "<")
-        return (((a == True ? 1 : 0) < stoi(b)) ? True : False);
+        return (((a == True ? 1 : 0) < stof(b)) ? True : False);
+      else if(c == ">")
+        return (((a == True ? 1 : 0) > stof(b)) ? True : False);
+      else if(c == "<=")
+        return ((a == True ? 1 : 0) <= (stof(b))? True : False);
+      else if(c == ">=")
+        return ((a == True ? 1 : 0) >= (stof(b))? True : False);
     }
   }
   else if(isBool(a))
@@ -160,35 +238,62 @@ string compare(string &a, string &b, string &c)
     {
       if(c == "==")
         return ((a == b)? True : False);
+      else if(c == "!=")
+        return ((a != b)? True : False);
       else if(c == "<")
         return (((a == True ? 1 : 0) < (b == True ? 1 : 0)) ? True : False);
+      else if(c == ">")
+        return (((a == True ? 1 : 0) > (b == True ? 1 : 0)) ? True : False);
+      else if(c == "<=")
+        return (((a == True ? 1 : 0) <= (b == True ? 1 : 0)) ? True : False);
+      else if(c == ">=")
+        return (((a == True ? 1 : 0) >= (b == True ? 1 : 0)) ? True : False);
     }
     else
     {
       if(c == "==")
         return (((a == True && b.size()) || (a == False && b.empty()))? True : False);
+      else if(c == "!=")
+        return (((a != True && b.size()) || (a != False && b.empty()))? True : False);
       else if(c == "<")
         return (((a == True ? 1 : 0) < (b.size() ? 1 : 0)) ? True : False);
+      else if(c == ">")
+        return (((a == True ? 1 : 0) > (b.size() ? 1 : 0)) ? True : False);
+      else if(c == "<=")
+        return (((a == True ? 1 : 0) <= (b.size() ? 1 : 0)) ? True : False);
+      else if(c == ">=")
+        return (((a == True ? 1 : 0) >= (b.size() ? 1 : 0)) ? True : False);
     }
-    
   }
   else if(isBool(b))
   {
     if(c == "==")
       return (((b == True && a.size()) || (b == False && a.empty()))? True : False);
+    else if(c == "!=")
+      return (((b != True && a.size()) || (b != False && a.empty()))? True : False);
     else if(c == "<")
       return (((a.size() ? 1 : 0) < (b == True ? 1 : 0)) ? True : False);
+    else if(c == ">")
+      return (((a.size() ? 1 : 0) > (b == True ? 1 : 0)) ? True : False);
+    else if(c == "<=")
+      return (((a.size() ? 1 : 0) <= (b == True ? 1 : 0)) ? True : False);
+    else if(c == ">=")
+      return (((a.size() ? 1 : 0) >= (b == True ? 1 : 0)) ? True : False);
   }
   else if(isString(a) && isString(b))
   {
     if(c == "==")
       return ((b == a)? True : False);
+    else if(c == "!=")
+      return ((b != a)? True : False);
     else if(c == "<")
       return ((b < a)? True : False);
-  }
-  else
-  {
-    error({"Erreur : Impossible de comparer des règles."});
+    else if(c == ">")
+      return ((b > a)? True : False);
+    else if(c == "<=")
+      return ((b < a)? True : False);
+    else if(c == ">=")
+      return ((b < a)? True : False);
   }
 }
 
@@ -204,6 +309,10 @@ vector<string> rToVect(string s, string delimiter)
       res[0] = token;
     else if(res.size() && res[0] == "<FONC>")
       res[0] = token;
+    else if(res.size() && res[0] == "<TAB>")
+      res[0] = token;
+    else if(res.size() && res[0] == "<FICHIER>")
+      res[0] = token;
     else
       res.push_back(token);
     s.erase(0, pos + delimiter.length());
@@ -211,6 +320,10 @@ vector<string> rToVect(string s, string delimiter)
   if(res.size() && res[0] == "<REGLE>")
     res[0] = s;
   else if(res.size() && res[0] == "<FONC>")
+    res[0] = s;
+  else if(res.size() && res[0] == "<TAB>")
+    res[0] = s;
+  else if(res.size() && res[0] == "<FICHIER>")
     res[0] = s;
   else if(!s.empty())
     res.push_back(s);
