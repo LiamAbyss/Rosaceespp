@@ -1,4 +1,0 @@
-importe "testin.rpp"
-salut = fonction():
-    affiche "salut"
-fin

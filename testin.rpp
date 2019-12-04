@@ -1,4 +1,0 @@
-importe "salut.rpp"
-coucou = fonction():
-    affiche "coucou"
-fin

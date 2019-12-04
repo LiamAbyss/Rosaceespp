@@ -18,6 +18,7 @@
 retourligne { return ENDL;}
 si { return IF; }
 ou { return OR; }
+et { return AND; }
 sinon { return SINON; }
 pour { return POUR; }
 tant[' ']que { return WHILE; }
@@ -49,7 +50,7 @@ retourner { return RETURN; }
 pause { return PAUSE; }
 vrai { yylval.chaine = strdup(yytext); return BOOL;}
 faux { yylval.chaine = strdup(yytext); return BOOL;}
-(-)?[0-9]+(\.[0-9]*)? {  yylval.chaine = strdup(yytext); return NUM; }
+[0-9]+(\.[0-9]*)? {  yylval.chaine = strdup(yytext); return NUM; }
 \"[^\"]*\"   { yylval.chaine = strdup(yytext); return STR; }
 [a-zA-Z]+[a-zA-Z0-9]*  { yylval.chaine = strdup(yytext); return VAR; }
 \n                              {  ++line; return EndOL; }

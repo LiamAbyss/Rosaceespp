@@ -59,7 +59,7 @@
 %token ARG
 %token DELETE
 %token RENAME
-%token OR
+%token OR AND
 %token READ
 %token WRITE
 %token APP
@@ -84,7 +84,7 @@
 %type <chaine> val
 %left '+' '-'
 %left '*' '/'
-%left RULE
+%left RULE AND OR
 %left ','
 
 %%
@@ -166,7 +166,7 @@ line: EndOL
       $1.ic_goto = ic;
       insert(VAR, $2);
       insert(VAR, (string)$2 + "max");
-      insert(COMP, "!=");
+      insert(COMP, "<=");
       $1.ic_false = ic;
       insert(JNZ, "0");
     }
@@ -248,6 +248,13 @@ comp: expr COMP expr
         insert(COMP, $2);
       }
     | comp OR comp
+      {
+        insert(CALC, "+");
+      }
+    | comp AND comp
+      {
+        insert(CALC, "*");
+      }
     ;
 
 getter: '[' expr ']'
@@ -328,9 +335,9 @@ expr: val
       {
         insert(APP, $4);
       }
-    | SIZEOF '(' VAR ')'
+    | SIZEOF '(' expr ')'
       {
-        insert(SIZEOF, $3);
+        insert(SIZEOF, "0");
       }
     | READ VAR
       {
@@ -387,10 +394,10 @@ expr: val
         instructions[$3.ic_false].second = to_string(ic);
       }
       END
-    | VAR '(' param ')'
+    | '-' expr
       {
-        insert(CALL, $1);
-        argcount = 0;
+        insert(NUM, "-1");
+        insert(CALC, "*");
       }
     | expr '+' expr
       {
@@ -411,6 +418,11 @@ expr: val
     | expr RULE expr
       {
         insert(RULE, "0");
+      }
+    | VAR '(' param ')'
+      {
+        insert(CALL, $1);
+        argcount = 0;
       }
     | '(' expr ')'
       {
@@ -569,7 +581,13 @@ void run_program(){
       break;
 
       case SIZEOF:
-        pile.push_back(to_string(tab[tab.size() - 1][ins.second].size()));
+        x = depiler(pile);
+        if(isTab(x))
+          pile.push_back(to_string(tab[tab.size() - 1][rToVect(x, "::")[0]].size()));
+        else if(isString(x))
+          pile.push_back(to_string(toStdStr(x).size()));
+        else if(isString(var[var.size() - 1][x]))
+          pile.push_back(to_string(toStdStr(var[var.size() - 1][x]).size()));
         ic++;
       break;
 
@@ -624,7 +642,7 @@ void run_program(){
           if(ch != EOF)
             pile.push_back(x);
           else
-            pile.push_back("FDF");
+            pile.push_back("\"FDF\"");
         }
         else
         {
@@ -836,12 +854,15 @@ void run_program(){
       case OUT :
         rule = false;
         x = depiler(pile);
-        for(int i = x.size() - 1; i >= 0; i--)
+        if(x.find(".") != string::npos)
         {
-          if(!(x[i] == '0' || x[i] == '.') || i == 0)
+          for(int i = x.size() - 1; i >= 0; i--)
           {
-            x.erase(x.begin() + i + 1, x.end());
-            break;
+            if(!(x[i] == '0'))
+            {
+              x.erase(x.begin() + i, x.end());
+              break;
+            }
           }
         }
         cout << toStdStr(x) << endl;
