@@ -1,6 +1,64 @@
 #include "rosacees.h"
-
+#include "sha256.h"
+#include <Windows.h>
 using namespace std;
+
+string getIn(bool shaMode)
+{
+  string res;
+  cin >> res;
+  if(shaMode)
+    return toStr(sha256(res));
+  else if(!isNumber(res) && !isBool(res))
+    return toStr(res);
+  else 
+    return res;  
+}
+
+string getpass(bool shaMode, string prompt, bool show_asterisk)
+{
+  if(!shaMode)
+    cout << "ATTENTION : La chaine de caractères que vous entrerez ne sera pas chiffrée !" << endl;
+  const char BACKSPACE=8;
+  const char RETURN=13;
+
+  string password;
+  unsigned char ch=0;
+
+  cout <<prompt;
+
+  DWORD con_mode;
+  DWORD dwRead;
+
+  HANDLE hIn=GetStdHandle(STD_INPUT_HANDLE);
+
+  GetConsoleMode( hIn, &con_mode );
+  SetConsoleMode( hIn, con_mode & ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT) );
+
+  while(ReadConsoleA( hIn, &ch, 1, &dwRead, NULL) && ch !=RETURN)
+  {
+    if(ch==BACKSPACE)
+    {
+      if(password.length()!=0)
+        {
+          if(show_asterisk)
+              cout <<"\b \b";
+          password.resize(password.length()-1);
+        }
+    }
+    else
+    {
+      password+=ch;
+      if(show_asterisk)
+          cout <<'*';
+    }
+  }
+  cout <<endl;
+  if(shaMode)
+    return toStr(sha256(password));
+  else 
+    return toStr(password);
+}
 
 void showVars(std::map<std::string, std::string> &var)
 {

@@ -59,7 +59,7 @@
 %token ARG
 %token DELETE
 %token RENAME
-%token OR AND
+%token SINON OR AND
 %token READ
 %token WRITE
 %token APP
@@ -68,15 +68,11 @@
 %token GET
 %token CALL
 %token CALC
-%token SINON
 %token ENDL
 %token END
-%token OUT
-%token IN
-%token JMP
-%token JNZ
-%token EndOF
-%token EndOL
+%token OUT IN PASS WITH WITHOUT SHA
+%token JMP JNZ
+%token EndOF EndOL
 %token PAUSE
 %type <chaine> expr
 %type <chaine> comp
@@ -111,13 +107,22 @@ line: EndOL
       insert(OUT, "0");
       return 0;
     }
-  | IN VAR EndOL
+  | IN VAR sha EndOL
     {
       insert(IN, $2);
     }
-  | IN VAR EndOF
+  | IN VAR sha EndOF
     { 
       insert(IN, $2);
+      return 0;
+    }
+  | PASS VAR sha EndOL
+    {
+      insert(PASS, $2);
+    }
+  | PASS VAR sha EndOF
+    { 
+      insert(PASS, $2);
       return 0;
     }
   | PAUSE EndOL { insert(PAUSE, "0"); }
@@ -214,6 +219,11 @@ line: EndOL
       insert(VAR, $4);
       insert(RENAME, "0");
     }
+  ;
+
+sha:
+  | WITH SHA { insert(SHA, "1"); }
+  | WITHOUT SHA { insert(SHA, "0"); }
   ;
 
 pas:  { $$ = (char*)"0"; }
@@ -451,6 +461,7 @@ string nom(int instruction){
    case CALC : return "CALC";
    case READ : return "LECT";
    case WRITE : return "ECR";
+   case SHA : return "SHA";
    case FONC : return "FONC";
    case RENAME : return "RENAME";
    case DELETE : return "DELETE";
@@ -460,6 +471,7 @@ string nom(int instruction){
    case NUM  : return "NUM";
    case OUT     : return "OUT";
    case IN : return "IN";
+   case PASS : return "PASS";
    case JNZ     : return "JNZ";   // Jump if not zero
    case JMP     : return "JMP";   // Unconditional Jump
    default  : return to_string (instruction);
@@ -526,7 +538,7 @@ void run_program(){
   int d = 0, couche = 0;
   cout << "===== EXECUTION =====" << endl;
   ic = 0;
-  bool rule = false;
+  bool rule = false, shaMode = false;
   while ( ic < instructions.size() ){
     auto ins = instructions[ic];
     switch(ins.first){
@@ -869,12 +881,27 @@ void run_program(){
         ic++;
       break;
 
+      case SHA:
+        shaMode = stoi(ins.second);
+        ic++;
+      break;
+
       case IN :
         rule = false;
-        cin >> var[var.size() - 1][ins.second];
-        if(!isNumber(var[var.size() - 1][ins.second]) && !isBool(var[var.size() - 1][ins.second]))
-          var[var.size() - 1][ins.second] = toStr(var[var.size() - 1][ins.second]);
+        var[var.size() - 1][ins.second] = getIn(shaMode);
         ic++;
+        shaMode = false;
+      break;
+
+      case PASS:
+        rule = false;
+        if(ic > 0 && instructions[ic - 1].first != SHA)
+          shaMode = true;
+        x = getpass(shaMode);
+        if(!isNumber(x) && !isBool(x))
+          var[var.size() - 1][ins.second] = toStr(x);
+        ic++;       
+        shaMode = false; 
       break;
     }
     if(var.size() > 1)

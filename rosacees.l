@@ -27,6 +27,10 @@ affiche { return OUT; }
 afficher { return OUT; }
 demande { return IN; }
 demander { return IN; }
+mot[' ']?de[' ']?passe { return PASS; }
+avec { return WITH; }
+sans { return WITHOUT; }
+sha256 { return SHA; }
 ajoute { return APP; }
 ajouter { return APP; }
 supprime { return DELETE; }
@@ -51,7 +55,7 @@ pause { return PAUSE; }
 vrai { yylval.chaine = strdup(yytext); return BOOL;}
 faux { yylval.chaine = strdup(yytext); return BOOL;}
 [0-9]+(\.[0-9]*)? {  yylval.chaine = strdup(yytext); return NUM; }
-\"[^\"]*\"   { yylval.chaine = strdup(yytext); return STR; }
+\"[^\"]*\"  { yylval.chaine = strdup(yytext); return STR; }
 [a-zA-Z]+[a-zA-Z0-9]*  { yylval.chaine = strdup(yytext); return VAR; }
 \n                              {  ++line; return EndOL; }
 \r  {  return EndOL;}

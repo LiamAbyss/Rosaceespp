@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+
 using namespace std;
 
 extern void yyrestart ( FILE *input_file );
@@ -19,6 +20,10 @@ extern vector<string> linefile;
 #define none "none"
 #define True "vrai"
 #define False "faux"
+
+string getIn(bool shaMode);
+
+string getpass(bool shaMode = true, string prompt="", bool show_asterisk=true);
 
 void showVars(std::map<std::string, std::string> &var);
 

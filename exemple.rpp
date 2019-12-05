@@ -1,8 +1,12 @@
 importe "formulaire.rpp"
 importe "math.rpp"
 
-pour i = 0:33:
-    ajoute factorielle(i) à tabFact
+mot de passe a
+affiche a
+motdepasse b
+
+si a == b:
+    affiche "Mot de passe correct"
 fin
 
 //remplirFormulaire("alire.txt")
