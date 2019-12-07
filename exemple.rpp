@@ -1,12 +1,14 @@
 importe "formulaire.rpp"
 importe "math.rpp"
+importe "pendu.rpp"
 
-mot de passe a
-affiche a
+pendu()
+/*mot de passe a
+affiche a + "\n"
 motdepasse b
 
 si a == b:
     affiche "Mot de passe correct"
-fin
+fin*/
 
 //remplirFormulaire("alire.txt")

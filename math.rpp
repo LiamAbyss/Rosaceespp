@@ -1,0 +1,18 @@
+puissance = fonction(a, b):
+    res = a
+    pour i = 1:b:
+        res = res * a
+    fin
+    retourne res
+fin
+
+factorielle = fonction(n):
+    si n < 0:
+        retourne
+    fin
+    si n == 0 ou n == 1:
+        retourne 1
+    sinon:
+        retourne n*factorielle(n-1)
+    fin
+fin

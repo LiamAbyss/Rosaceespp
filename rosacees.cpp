@@ -60,6 +60,23 @@ string getpass(bool shaMode, string prompt, bool show_asterisk)
     return toStr(password);
 }
 
+void clearConsole() {
+    COORD topLeft  = { 0, 0 };
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO screen;
+    DWORD written;
+
+    GetConsoleScreenBufferInfo(console, &screen);
+    FillConsoleOutputCharacterA(
+        console, ' ', screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+    );
+    FillConsoleOutputAttribute(
+        console, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE,
+        screen.dwSize.X * screen.dwSize.Y, topLeft, &written
+    );
+    SetConsoleCursorPosition(console, topLeft);
+}
+
 void showVars(std::map<std::string, std::string> &var)
 {
   for(auto f : var)
@@ -73,11 +90,6 @@ void error(vector<string> e)
   for(auto s : e)
     cout << "| " << s << endl;
   exit(-1);
-}
-
-void erase(std::map<std::string, std::string> &var, string s)
-{
-  var.erase(var.find(s));
 }
 
 bool isString(string s)
@@ -444,7 +456,7 @@ string add(string a, string b)
     }
     else
     {
-      a = toStdStr(a) + toStdStr(b);
+      a += toStdStr(b);
       return toStr(a);
     }
   }
@@ -748,29 +760,28 @@ string divide(string a, string b)
         {
           cout << f << endl;
         }*/
-        auto pos = find(rule.begin(), rule.end(), rule[0])+1;
         {
           if(isString(rule[0]))
           {
             if(isNumber(rule[1]))
             {
-              for(int i = 0; i < s.size(); i++)
+              for(int i = 0; i < a.size(); i++)
               {
-                s.replace(i, 1, (find(pos, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : (string)""+s[i]));
+                a.replace(i, 1, (find(rule.begin() + 1, rule.end(), to_string(i)) != rule.end() ? toStdStr(rule[0]) : (string)""+a[i]));
               }
-              res = s;
+              res = a;
             }
             else if(isString(rule[1]))
             {
               vector<size_t> p;
               for(int i = 1; i < rule.size(); i++)
               {
-                while(s.find(toStdStr(rule[i])) != string::npos)
+                while(a.find(toStdStr(rule[i])) != string::npos)
                 {
-                  replace(s, toStdStr(rule[i]), toStdStr(rule[0]));
+                  replace(a, toStdStr(rule[i]), toStdStr(rule[0]));
                 }
               }
-              res = s; 
+              res = a; 
             }
           }
           else if(isNumber(rule[0]))

@@ -1,0 +1,25 @@
+importe "fflux.rpp"
+
+remplirFormulaire = fonction(nom):
+    form = fichier(nom, "r+")
+
+    affiche "Lecture du formulaire..."
+
+    templates = lireLigne(form)
+    buffer = lireLigne(form)
+    tant que buffer != "FDF":
+        ajoute buffer à templates
+        buffer = lireLigne(form)
+    fin
+
+    form = fichier("tmp.txt", "w")
+
+    pour i = 0:taille(templates):
+        affiche "Entrez votre " + (templates[i] / " :")
+        demande buffer
+        écrire templates[i] + " " + buffer + "\n" dans form
+    fin
+
+    supprime nom
+    renomme "tmp.txt" en nom
+fin 

@@ -1,0 +1,39 @@
+lireLigne = fonction(f):
+    res = ""
+    a = lire f
+    tant que a == "\n":
+        a = lire f
+    fin
+    si a == "FDF":
+        retourne "FDF"
+    fin
+    tant que a != "\n" et a != "\r":
+        res = res + a
+        a = lire f
+    fin
+    si res == "":
+        retourne "FDF"
+    sinon :
+        retourne res
+    fin
+fin
+
+lireMot = fonction(f):
+    res = ""
+    a = lire f
+    tant que a == " ":
+        a = lire f
+    fin
+    si a == "FDF":
+        retourne "FDF"
+    fin
+    tant que a != " ":
+        res = res + a
+        a = lire f
+    fin
+    si res == "":
+        retourne "FDF"
+    sinon :
+        retourne res
+    fin
+fin

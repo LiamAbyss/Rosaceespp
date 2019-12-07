@@ -16,6 +16,7 @@
 \/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/ { return EndOL;}
 \/\/.*[\r\n] { return EndOL; }
 retourligne { return ENDL;}
+nettoie[' ']?console { return CLS; }
 si { return IF; }
 ou { return OR; }
 et { return AND; }

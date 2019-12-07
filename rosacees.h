@@ -25,11 +25,11 @@ string getIn(bool shaMode);
 
 string getpass(bool shaMode = true, string prompt="", bool show_asterisk=true);
 
+void clearConsole();
+
 void showVars(std::map<std::string, std::string> &var);
 
 void error(vector<string> e);
-
-void erase(std::map<std::string, std::string> &var, string s);
 
 bool isString(string s);
 

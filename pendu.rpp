@@ -1,0 +1,66 @@
+demandeMot = fonction():
+    affiche "Entrez un mot : \n"
+    motdepasse retour sans sha256
+    retourne retour
+fin
+
+demandeLettre = fonction():
+    affiche "Entrez une lettre : "
+    demande lettre
+    retourne lettre
+fin
+
+dedans = fonction(chaine, lettre):
+    pour i = 0:taille(chaine)-1 :
+        si lettre == chaine[i]:
+            retourne vrai
+        fin
+    fin
+    retourne faux
+fin
+
+modifieMotActuel = fonction(motActuel, motDemande, lettre):
+    pour i = 0:taille(motDemande)-1 :
+        si lettre == motDemande[i]:
+            motActuel = motActuel / (lettre::i)
+        fin
+    fin
+    retourne motActuel
+fin
+
+pendu = fonction():
+    motDemande = demandeMot()
+    motActuel = ""
+
+    pour i = 0:taille(motDemande)-1 :
+        motActuel = motActuel + "*"
+    fin
+
+    gagne = faux
+    lettreProposee = ""
+    chances = 10
+
+    tant que chances > 0 et gagne == faux:
+        nettoieconsole
+        affiche chances + " chances restantes\n"
+        affiche motActuel + "\n"
+        lettreProposee = demandeLettre()
+
+        si dedans(motDemande, lettreProposee):
+            motActuel = modifieMotActuel(motActuel, motDemande, lettreProposee)
+
+            si motActuel == motDemande:
+                gagne = vrai
+            fin
+        sinon:
+            chances = chances - 1
+        fin
+    fin
+    si gagne:
+        affiche "Bravo !\nLe mot etait bien : "
+    sinon:
+        affiche "Dommage !\nLe mot etait : "
+    fin
+    affiche motDemande
+fin
+
