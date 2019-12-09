@@ -1,8 +1,12 @@
-importe "formulaire.rpp"
-importe "math.rpp"
-importe "pendu.rpp"
-
-pendu()
+motdepasse mdp
+a = chiffre "la salamande arrive a point pour le feu" avec mdp
+affiche a
+affiche retourligne
+affiche dechiffre a avec "aze"
+affiche retourligne
+affiche dechiffre a avec mdp
+affiche retourligne
+//pendu()
 /*mot de passe a
 affiche a + "\n"
 motdepasse b

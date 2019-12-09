@@ -32,6 +32,10 @@ mot[' ']?de[' ']?passe { return PASS; }
 avec { return WITH; }
 sans { return WITHOUT; }
 sha256 { return SHA; }
+chiffrer { return ENCRYPT; }
+chiffre { return ENCRYPT; }
+d(é|e)chiffrer { return DECRYPT; }
+d(é|e)chiffre { return DECRYPT; }
 ajoute { return APP; }
 ajouter { return APP; }
 supprime { return DELETE; }

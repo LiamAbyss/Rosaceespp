@@ -1,7 +1,14 @@
 %{
-  #include "rosacees.h"
+  #include "../include/rosacees.h"
+  #include "../include/encrypt.h"
   using namespace std;
   int yyerror(char *s);
+  #define DEBUG
+  #ifdef DEBUG
+    string path = "D:/VisualStudioProjects/vscode/Rosaceespp/";
+  #else
+    string path = "";
+  #endif
 
   vector<map<string, string>> var;
   vector<map<string, vector<string>>> tab;
@@ -58,6 +65,7 @@
 %token OBJ
 %token ARG
 %token DELETE
+%token ENCRYPT DECRYPT
 %token RENAME
 %token SINON OR AND
 %token READ
@@ -339,6 +347,14 @@ retour: RETURN
       ;
 
 expr: val
+    | ENCRYPT val WITH val EndOL
+      {
+        insert(ENCRYPT, "0");
+      }
+    | DECRYPT val WITH val EndOL
+      {
+        insert(DECRYPT, "0");
+      }
     | ENDL
       {
         insert(ENDL, "0");
@@ -457,6 +473,8 @@ string nom(int instruction){
    case APP : return "APP";
    case SIZEOF : return "SIZEOF";
    case FICHIER : return "FICHIER";
+   case ENCRYPT : return "ENCRYPT";
+   case DECRYPT : return "DECRYPT";
    case GET : return "GET";
    case ENDL : return "ENDL";
    case BOOL : return "BOOL";
@@ -485,10 +503,10 @@ void print_program(string filename){
   //cout << "==== CODE GENERE ====" << endl;
   int i = 0;
   filename.erase(filename.end() - 4, filename.end());
-  ofstream f((filename + ".rppt").c_str());
+  ofstream f((path + filename + ".rppt").c_str());
   for (auto ins : instructions )
   {
-    //cout << i++ << '\t' << nom(ins.first) << "\t" << ins.second << endl;
+    cout << i++ << '\t' << nom(ins.first) << "\t" << ins.second << endl;
     f << i << "\t\t" << nom(ins.first) << "\t\t" << ins.second << endl;
   }
   //cout << "=====================" << endl;  
@@ -519,9 +537,9 @@ void compile(string filename)
   cout << "|                       \\|               |" << endl;
   cout << " `````````````````````````````````````````" << endl;
   filename.erase(filename.end() - 4, filename.end());
-  ofstream f((filename + ".cpp").c_str());
+  ofstream f((path + filename + ".cpp").c_str());
   {
-    f << "#include \"" << "rosacees.h\"" << endl;
+    f << "#include \"" << "" + path + "rosacees.h\"" << endl;
     f << "using namespace std;" << endl;
     f << "vector<map<string, string>> var;" << endl << "vector<vector<pair<int,int>>> ifGoto;" << endl;
     f << "vector<pair<int, string>> instructions;" << endl;
@@ -984,11 +1002,13 @@ void compile(string filename)
   }
   f << "}" << endl;
   f.close();
-  system("g++ -g -c rosacees.cpp -o rosacees.o");
-  system("g++ -g -c sha256.cpp -o sha256.o");
-  string cmd = "g++ " + filename + ".cpp rosacees.o sha256.o -o " + filename + ".exe";
+  string cmd = "g++ -g -c " + path + "rosacees.cpp -o " + path + "rosacees.o";
   system(cmd.c_str());
-  remove((filename + ".cpp").c_str());
+  cmd = "g++ -g -c " + path + "sha256.cpp -o " + path + "sha256.o";
+  system(cmd.c_str());
+  cmd = "g++ " + path + "" + filename + ".cpp " + path + "rosacees.o " + path + "sha256.o -o " + filename + ".exe";
+  system(cmd.c_str());
+  remove((path + filename + ".cpp").c_str());
   cout << "Compilation terminée !" << endl;
 }
 
@@ -1008,6 +1028,20 @@ void run_program(){
   while ( ic < instructions.size() ){
     auto ins = instructions[ic];
     switch(ins.first){
+      case ENCRYPT:
+        x = depiler(pile);
+        y = depiler(pile);
+        pile.push_back(encrypt(y, x));
+        ic++;
+      break;
+
+      case DECRYPT:
+        x = depiler(pile);
+        y = depiler(pile);
+        pile.push_back(decrypt(y, x));
+        ic++;
+      break;
+
       case PAUSE:
         pause();
         ic++;
@@ -1400,7 +1434,7 @@ void run_program(){
 
       case PASS:
         rule = false;
-        if(ic > 0 && instructions[ic - 1].first != SHA)
+        if((ic > 0 && instructions[ic - 1].first != SHA) || !ic)
           shaMode = true;
         x = getpass(shaMode);
         if(!isNumber(x) && !isBool(x))
@@ -1497,7 +1531,7 @@ int main(int argc, char* argv[]) {
       fclose(yyin);
       remove("tmpCompil.rppx");
       print_program(name);
-      if(argc > 2 && !strcmp(argv[2], "compile"))
+      if(argc > 2 && !strcmp(argv[2], "-c"))
         compile(name);
       else
         run_program();

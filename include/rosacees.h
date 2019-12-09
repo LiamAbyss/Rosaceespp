@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <stdio.h>
+#include <ctype.h>
 
 using namespace std;
 

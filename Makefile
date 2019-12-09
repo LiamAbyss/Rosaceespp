@@ -15,11 +15,12 @@ build:
 	@echo "|                     \`\\\\,               |"
 	@echo "|                       \\|               |"
 	@echo " \`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`\`"
-	bison -d rosacees.y -o rosacees.bison.cpp -Wnone
-	flex -o rosacees.lex.cpp rosacees.l
-	g++ -g -c rosacees.cpp -o rosacees.o 
-	g++ -g -c sha256.cpp -o sha256.o
-	g++ rosacees.bison.cpp rosacees.lex.cpp rosacees.o sha256.o -o rosacees
+	bison -d src/rosacees.y -o src/rosacees.bison.cpp -Wnone
+	flex -o src/rosacees.lex.cpp src/rosacees.l
+	g++ -g -c src/rosacees.cpp -o o/rosacees.o 
+	g++ -g -c src/sha256.cpp -o o/sha256.o
+	g++ -g -c src/encrypt.cpp -o o/encrypt.o
+	g++ src/rosacees.bison.cpp src/rosacees.lex.cpp o/rosacees.o o/sha256.o o/encrypt.o -o rosacees
 
 run:
 	./rosacees
@@ -28,4 +29,4 @@ ex:
 	./rosacees exemple.rpp
 
 compile:
-	./rosacees exemple.rpp compile
+	./rosacees exemple.rpp -c

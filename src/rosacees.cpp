@@ -1,5 +1,5 @@
-#include "rosacees.h"
-#include "sha256.h"
+#include "../include/rosacees.h"
+#include "../include/sha256.h"
 #include <Windows.h>
 using namespace std;
 
