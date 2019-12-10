@@ -3,7 +3,7 @@ importe "fflux.rpp"
 remplirFormulaire = fonction(nom):
     form = fichier(nom, "r+")
 
-    affiche "Lecture du formulaire..."
+    affiche "Lecture du formulaire...\n"
 
     templates = lireLigne(form)
     buffer = lireLigne(form)
@@ -14,8 +14,9 @@ remplirFormulaire = fonction(nom):
 
     form = fichier("tmp.txt", "w")
 
-    pour i = 0:taille(templates):
+    pour i = 0:taille(templates)-1:
         affiche "Entrez votre " + (templates[i] / " :")
+        affiche retourligne
         demande buffer
         écrire templates[i] + " " + buffer + "\n" dans form
     fin

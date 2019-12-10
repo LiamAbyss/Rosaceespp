@@ -49,8 +49,8 @@ taille { return SIZEOF; }
 fichier { return FICHIER; }
 lis { return READ; }
 lire { return READ; }
-écris { return WRITE; }
-écrire { return WRITE; }
+(é|e)cris { return WRITE; }
+(é|e)crire { return WRITE; }
 fin { return END; }
 :: { yylval.chaine = strdup(yytext); return RULE; }
 fonction { return FONC; }

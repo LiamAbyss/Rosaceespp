@@ -1027,18 +1027,19 @@ void run_program(){
   bool rule = false, shaMode = false;
   while ( ic < instructions.size() ){
     auto ins = instructions[ic];
+    //cout << ic << " " << nom(ins.first) << endl;
     switch(ins.first){
       case ENCRYPT:
         x = depiler(pile);
         y = depiler(pile);
-        pile.push_back(encrypt(y, x));
+        pile.push_back(toStr(encrypt(toStdStr(y), toStdStr(x))));
         ic++;
       break;
 
       case DECRYPT:
         x = depiler(pile);
         y = depiler(pile);
-        pile.push_back(decrypt(y, x));
+        pile.push_back(toStr(decrypt(toStdStr(y), toStdStr(x))));
         ic++;
       break;
 
@@ -1144,7 +1145,7 @@ void run_program(){
           }
           else
           {
-            error({"Erreur : Sortie du tableau " + x + " à l'indice " + y});
+            error({"Erreur : Sortie de la chaine " + x + " à l'indice " + y});
           }
         }
         args.clear();
@@ -1450,6 +1451,10 @@ void run_program(){
         ic = stoi(var[var.size() - 1]["<SAUT_RETOUR>"]);
         var.pop_back();
         tab.pop_back();
+        for(auto f : files[files.size()-1])
+        {
+          fclose(f.second);
+        }
         files.pop_back();
       }
     }

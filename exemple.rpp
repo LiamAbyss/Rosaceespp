@@ -1,18 +1,29 @@
-motdepasse mdp
+importe "bdd.rpp"
+
+/*motdepasse mdp
 a = chiffre "la salamande arrive a point pour le feu" avec mdp
 affiche a
 affiche retourligne
 affiche dechiffre a avec "aze"
 affiche retourligne
 affiche dechiffre a avec mdp
-affiche retourligne
+affiche retourligne*/
 //pendu()
-/*mot de passe a
-affiche a + "\n"
-motdepasse b
-
-si a == b:
-    affiche "Mot de passe correct"
-fin*/
 
 //remplirFormulaire("alire.txt")
+
+//BDD
+/*motdepasse mdp
+bdd = recupereBdd("bddtmp", mdp)
+si bdd != faux:
+    afficheBdd(bdd)
+    pour i = 0:0:
+        ajouteBdd(bdd)
+    fin
+    motdepasse mdp
+    ecrisBdd("bddtmp", mdp, bdd)
+    afficheBdd(bdd)
+    si connexionBdd(bdd):
+        affiche "ok\n"
+    fin
+fin*/

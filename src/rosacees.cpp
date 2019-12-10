@@ -6,7 +6,7 @@ using namespace std;
 string getIn(bool shaMode)
 {
   string res;
-  cin >> res;
+  getline(cin, res);
   if(shaMode)
     return toStr(sha256(res));
   else if(!isNumber(res) && !isBool(res))

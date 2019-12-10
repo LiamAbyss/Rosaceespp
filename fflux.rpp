@@ -1,7 +1,7 @@
 lireLigne = fonction(f):
     res = ""
     a = lire f
-    tant que a == "\n":
+    tant que a == "\n" ou a == "\r":
         a = lire f
     fin
     si a == "FDF":
@@ -21,7 +21,7 @@ fin
 lireMot = fonction(f):
     res = ""
     a = lire f
-    tant que a == " ":
+    tant que a == " " ou a == "\n" ou a == "\r":
         a = lire f
     fin
     si a == "FDF":
@@ -36,4 +36,15 @@ lireMot = fonction(f):
     sinon :
         retourne res
     fin
+fin
+
+recupereContenu = fonction(nom):
+    f = fichier(nom, "r+")
+    c = lire f
+    contenu = ""
+    tant que c != "FDF":
+        contenu = contenu + c
+        c = lire f
+    fin
+    retourne contenu
 fin

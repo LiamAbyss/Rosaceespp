@@ -1,0 +1,124 @@
+importe "formulaire.rpp"
+
+separer = fonction(chaine, sep):
+    tmp = ""
+    pour i = 0:taille(chaine)-1 :
+        c = chaine[i]
+        si c == sep:
+            ajoute tmp à retour
+            tmp = ""
+        sinon si i == taille(chaine)-1:
+            tmp = tmp + c
+            ajoute tmp à retour
+        sinon:
+            tmp = tmp + c
+        fin
+    fin
+    retourne retour
+fin
+
+recupereBdd = fonction(nom, mdp):
+    contenu = recupereContenu(nom)
+    contenu = dechiffre contenu avec mdp
+    c = contenu[0]
+    i = 1
+    tmp = ""
+    tant que c != "\n" et i < taille(contenu):
+        tmp = tmp + c
+        c = contenu[i]
+        i = i + 1
+    fin
+    si tmp != mdp:
+        affiche "Mot de passe incorrect.\n"
+        retourne faux
+    sinon:
+        affiche "Mot de passe correct.\n"
+    fin
+    contenu = contenu / (mdp + "\n")
+    champs = separer(contenu, "\n")
+    retourne champs
+fin
+
+ecrisBdd = fonction(nom, mdp, champs):
+    contenu = mdp + "\n"
+    pour i = 0:taille(champs)-1:
+        contenu = contenu + champs[i]
+        si i != taille(champs) - 1:
+            contenu = contenu + "\n"
+        fin
+    fin
+    contenu = chiffre contenu avec mdp
+    f = fichier(nom, "w")
+    écris contenu dans f
+fin
+
+ajouteBdd = fonction(bdd):
+    nb = bdd[0]
+    pour i = 1:nb:
+        affiche "Entrez votre " + (bdd[i] / "(secret)") + "\n"
+        si (bdd[i] / "(secret)") != bdd[i]:
+            motdepasse tmp
+        sinon:
+            demande tmp
+        fin
+        ajoute tmp à bdd
+    fin
+    retourne bdd
+fin
+
+initBdd = fonction():
+    champ = ""
+    affiche "Ajoutez '(secret)' dans un champ si tel est le cas, entrez 'fin' pour créer la bdd.\n" 
+    tant que champ != "fin":
+        affiche "Entrez un nom de champ \n"
+        demande champ
+        ajoute champ à tmp
+    fin
+    ajoute taille(tmp)-1 à bdd
+    pour i = 0:taille(tmp)-2:
+        ajoute tmp[i] à bdd
+    fin
+    affiche "Entrez le nom de votre bdd\n"
+    demande nom
+    affiche "Entrez votre mot de passe\n"
+    motdepasse mdp
+    ecrisBdd(nom, mdp, bdd)
+    bdd = recupereBdd(nom, mdp)
+    retourne bdd
+fin
+
+afficheBdd = fonction(bdd):
+    nb = bdd[0]
+    i = 1
+    tant que i <= taille(bdd)-1:
+        pour j = 1:nb:
+            affiche (bdd[i] / "(secret)")
+            offset = 20
+            si (bdd[j] / "(secret)") != bdd[j]:
+                offset = 75
+            fin
+            pour k = 0:(offset + taille(bdd[j])-taille(bdd[i])):
+                affiche " "
+            fin
+            i = i + 1
+        fin
+        affiche retourligne
+    fin
+fin
+
+connexionBdd = fonction(bdd):
+    affiche "Entrez votre " + bdd[1] + "\n"
+    demande nom
+    affiche "Entrez votre " + (bdd[2] / "(secret)") + "\n"
+    motdepasse mdp
+    pour i = 1:taille(bdd)-1:
+        si nom == bdd[i]:
+            si mdp == bdd[i+1]:
+                retourne vrai
+            sinon:
+                retourne faux
+            fin
+        fin
+    fin
+    retourne faux
+fin
