@@ -12,13 +12,13 @@ remplirFormulaire = fonction(nom):
         buffer = lireLigne(form)
     fin
 
-    form = fichier("tmp.txt", "w")
+    form2 = fichier("tmp.txt", "w")
 
     pour i = 0:taille(templates)-1:
         affiche "Entrez votre " + (templates[i] / " :")
         affiche retourligne
         demande buffer
-        écrire templates[i] + " " + buffer + "\n" dans form
+        écrire templates[i] + " " + buffer + "\n" dans form2
     fin
 
     supprime nom

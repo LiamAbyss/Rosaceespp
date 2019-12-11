@@ -1,0 +1,34 @@
+importe "bdd.rpp"
+
+initBdd()
+pause
+
+affiche "Entrez le nom de la bdd\n"
+demande nom
+affiche "Entrez le mot de passe\n"
+motdepasse mdp
+
+bdd = recupereBdd(nom, mdp)
+tant que bdd == faux:
+    affiche "Entrez le nom de la bdd\n"
+    demande nom
+    affiche "Entrez le mot de passe\n"
+    motdepasse mdp
+    bdd = recupereBdd(nom, mdp)
+fin
+
+si bdd != faux:
+    afficheBdd(bdd)
+    pour i = 0:1:
+        ajouteBdd(bdd)
+    fin
+    pause
+    affiche "Entrez le mot de passe de votre bdd\n"
+    motdepasse mdp
+    ecrisBdd("bddtmp", mdp, bdd)
+    afficheBdd(bdd)
+    pause
+    si connexionBdd(bdd):
+        affiche "ok\n"
+    fin
+fin

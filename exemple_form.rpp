@@ -1,0 +1,5 @@
+importe "formulaire.rpp"
+
+affiche "Entrez le nom du formulaire\n"
+demande nom
+remplirFormulaire(nom)

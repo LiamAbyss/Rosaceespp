@@ -1,29 +1,5 @@
-importe "bdd.rpp"
+lorem  = "Lorem ipsum dolor sit amet.consectetur adipiscing elit.Donec ornare varius semper.Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.Phasellus accumsan sed purus non tincidunt.Ut varius mattis finibus.Curabitur condimentum vitae libero et laoreet.Phasellus vehicula quam neque.non rhoncus mi ultricies sed.Donec in cursus ante.blandit finibus erat.Duis ornare dignissim dui.eu porttitor metus commodo et.Fusce ligula nunc.sodales eu tempus sed.malesuada quis metus.Pellentesque convallis lobortis lectus id vehicula.Etiam ante leo.ultrices vitae elit quis.ultricies volutpat mauris."
 
-/*motdepasse mdp
-a = chiffre "la salamande arrive a point pour le feu" avec mdp
-affiche a
-affiche retourligne
-affiche dechiffre a avec "aze"
-affiche retourligne
-affiche dechiffre a avec mdp
-affiche retourligne*/
-//pendu()
+regle1 = "\n"::"."
 
-//remplirFormulaire("alire.txt")
-
-//BDD
-/*motdepasse mdp
-bdd = recupereBdd("bddtmp", mdp)
-si bdd != faux:
-    afficheBdd(bdd)
-    pour i = 0:0:
-        ajouteBdd(bdd)
-    fin
-    motdepasse mdp
-    ecrisBdd("bddtmp", mdp, bdd)
-    afficheBdd(bdd)
-    si connexionBdd(bdd):
-        affiche "ok\n"
-    fin
-fin*/
+affiche lorem * regle1

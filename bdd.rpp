@@ -92,7 +92,11 @@ afficheBdd = fonction(bdd):
     i = 1
     tant que i <= taille(bdd)-1:
         pour j = 1:nb:
-            affiche (bdd[i] / "(secret)")
+            si i < nb:
+                affiche (bdd[i] / "(secret)")
+            sinon:
+                affiche bdd[i]
+            fin
             offset = 20
             si (bdd[j] / "(secret)") != bdd[j]:
                 offset = 75

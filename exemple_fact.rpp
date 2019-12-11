@@ -1,0 +1,9 @@
+importe "math.rpp"
+
+pour i = 0:35 :
+    ajoute factorielle(i) à tab
+fin
+
+pour i = 0:taille(tab)-1 :
+    affiche tab[i] + "\n"
+fin
