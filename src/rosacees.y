@@ -506,8 +506,9 @@ void print_program(string filename){
   ofstream f((path + filename + ".rppt").c_str());
   for (auto ins : instructions )
   {
-    cout << i++ << '\t' << nom(ins.first) << "\t" << ins.second << endl;
+    //cout << i++ << '\t' << nom(ins.first) << "\t" << ins.second << endl;
     f << i << "\t\t" << nom(ins.first) << "\t\t" << ins.second << endl;
+    i++;
   }
   //cout << "=====================" << endl;  
 }
@@ -527,7 +528,7 @@ void compile(string filename)
   cout << "|       \\ \\'     \\/S )                   |" << endl;
   cout << "|        L.'-. _.'|-'                    |" << endl;
   cout << "|       <_`-'\\'_.'/                      |" << endl;
-  cout << "|          `'-._( \\    Rosacées++        |" << endl;
+  cout << "|          `'-._( \\    Rosacées          |" << endl;
   cout << "|           ___   \\\\,      ___           |" << endl;
   cout << "|           \\ .'-. \\\\   .-'_. /          |" << endl;
   cout << "|            '._' '.\\\\/.-'_.'            |" << endl;
@@ -537,9 +538,10 @@ void compile(string filename)
   cout << "|                       \\|               |" << endl;
   cout << " `````````````````````````````````````````" << endl;
   filename.erase(filename.end() - 4, filename.end());
-  ofstream f((path + filename + ".cpp").c_str());
+  ofstream f((path + "src/" + filename + ".cpp").c_str());
   {
-    f << "#include \"" << "" + path + "rosacees.h\"" << endl;
+    f << "#include \"" << "" + path + "include/rosacees.h\"" << endl;
+    f << "#include \"" << "" + path + "include/encrypt.h\"" << endl;
     f << "using namespace std;" << endl;
     f << "vector<map<string, string>> var;" << endl << "vector<vector<pair<int,int>>> ifGoto;" << endl;
     f << "vector<pair<int, string>> instructions;" << endl;
@@ -587,6 +589,18 @@ void compile(string filename)
     f << "  while ( ic < instructions.size() ){" << endl;
     f << "    auto ins = instructions[ic];" << endl;
     f << "    switch(ins.first){" << endl;
+    f << "case " << ENCRYPT << ":" << endl;
+    f << "x = depiler(pile);" << endl;
+    f << "y = depiler(pile);" << endl;
+    f << "pile.push_back(toStr(encrypt(toStdStr(y), toStdStr(x))));" << endl;
+    f << "ic++;" << endl;
+    f << "break;" << endl;
+    f << "case" << DECRYPT << ":" << endl;
+    f << "x = depiler(pile);" << endl;
+    f << "y = depiler(pile);" << endl;
+    f << "pile.push_back(toStr(decrypt(toStdStr(y), toStdStr(x))));" << endl;
+    f << "ic++;" << endl;
+    f << "break;" << endl;
     f << "      case " << PAUSE << ":" << endl;
     f << "        pause();" << endl;
     f << "        ic++;" << endl;
@@ -1002,13 +1016,15 @@ void compile(string filename)
   }
   f << "}" << endl;
   f.close();
-  string cmd = "g++ -g -c " + path + "rosacees.cpp -o " + path + "rosacees.o";
+  string cmd = "g++ -g -c " + path + "src/rosacees.cpp -o " + path + "o/rosacees.o";
   system(cmd.c_str());
-  cmd = "g++ -g -c " + path + "sha256.cpp -o " + path + "sha256.o";
+  cmd = "g++ -g -c " + path + "src/sha256.cpp -o " + path + "o/sha256.o";
   system(cmd.c_str());
-  cmd = "g++ " + path + "" + filename + ".cpp " + path + "rosacees.o " + path + "sha256.o -o " + filename + ".exe";
+  cmd =	"g++ -g -c " + path + "src/encrypt.cpp -o" + path + "o/encrypt.o";
   system(cmd.c_str());
-  remove((path + filename + ".cpp").c_str());
+  cmd = "g++ " + path + "src/" + filename + ".cpp " + path + "o/rosacees.o " + path + "o/sha256.o "+ path + "o/encrypt.o -o " + filename + ".exe";
+  system(cmd.c_str());
+  remove((path + "src/" + filename + ".cpp").c_str());
   cout << "Compilation terminée !" << endl;
 }
 
